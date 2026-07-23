@@ -1,0 +1,29 @@
+//==========================
+//Control
+//==========================
+//clk
+//rst_n
+//pixel_valid
+//window_clear
+//col_window_clear
+//
+//==========================
+//Input Stream
+//==========================
+//row0_pixel
+//row1_pixel
+//row2_pixel
+//
+//==========================
+//Internal Window
+//==========================
+//win_00 win_01 win_02
+//win_10 win_11 win_12
+//win_20 win_21 win_22
+//col_fill_cnt
+//
+//==========================
+//Output
+//==========================
+//patch_valid
+//patch_data

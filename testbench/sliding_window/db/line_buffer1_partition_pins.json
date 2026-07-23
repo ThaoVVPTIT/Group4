@@ -1,0 +1,417 @@
+{
+	"partitions" : [
+		{
+			"name" : "Top",
+			"pins" : [
+				{
+					"name" : "patch_data[0]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[1]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[2]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[3]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[4]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[5]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[6]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[7]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[8]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[9]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[10]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[11]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[12]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[13]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[14]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[15]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[16]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[17]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[18]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[19]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[20]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[21]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[22]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[23]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[24]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[25]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[26]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[27]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[28]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[29]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[30]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[31]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[32]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[33]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[34]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[35]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[36]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[37]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[38]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[39]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[40]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[41]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[42]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[43]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[44]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[45]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[46]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[47]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[48]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[49]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[50]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[51]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[52]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[53]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[54]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[55]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[56]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[57]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[58]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[59]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[60]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[61]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[62]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[63]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[64]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[65]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[66]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[67]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[68]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[69]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[70]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_data[71]",
+					"strict" : false
+				},
+				{
+					"name" : "patch_valid",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[0]",
+					"strict" : false
+				},
+				{
+					"name" : "window_clear",
+					"strict" : false
+				},
+				{
+					"name" : "clk",
+					"strict" : false
+				},
+				{
+					"name" : "rst_n",
+					"strict" : false
+				},
+				{
+					"name" : "col_window_clear",
+					"strict" : false
+				},
+				{
+					"name" : "pixel_valid",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[1]",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[2]",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[3]",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[4]",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[5]",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[6]",
+					"strict" : false
+				},
+				{
+					"name" : "row2_pixel[7]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[0]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[1]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[2]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[3]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[4]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[5]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[6]",
+					"strict" : false
+				},
+				{
+					"name" : "row1_pixel[7]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[0]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[1]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[2]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[3]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[4]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[5]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[6]",
+					"strict" : false
+				},
+				{
+					"name" : "row0_pixel[7]",
+					"strict" : false
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,16 @@
+Analysis & Synthesis Status : Successful - Wed Jul 22 00:06:19 2026
+Quartus Prime Version : 17.1.0 Build 590 10/25/2017 SJ Lite Edition
+Revision Name : line_buffer1
+Top-level Entity Name : window_generator
+Family : MAX 10
+Total logic elements : 77
+    Total combinational functions : 77
+    Dedicated logic registers : 75
+Total registers : 75
+Total pins : 102
+Total virtual pins : 0
+Total memory bits : 0
+Embedded Multiplier 9-bit elements : 0
+Total PLLs : 0
+UFM blocks : 0
+ADC blocks : 0

@@ -1,0 +1,665 @@
+$date
+	Wed Jul 22 23:16:24 2026
+$end
+$version
+	ModelSim Version 10.5b
+$end
+$timescale
+	1ps
+$end
+
+$scope module tb_window_generator $end
+$var parameter 32 ! DATA_WIDTH $end
+$var reg 1 " clk $end
+$var reg 1 # rst_n $end
+$var reg 1 $ pixel_valid $end
+$var reg 1 % col_window_clear $end
+$var reg 1 & window_clear $end
+$var reg 8 ' row0_pixel [7:0] $end
+$var reg 8 ( row1_pixel [7:0] $end
+$var reg 8 ) row2_pixel [7:0] $end
+$var wire 1 * patch_data [71] $end
+$var wire 1 + patch_data [70] $end
+$var wire 1 , patch_data [69] $end
+$var wire 1 - patch_data [68] $end
+$var wire 1 . patch_data [67] $end
+$var wire 1 / patch_data [66] $end
+$var wire 1 0 patch_data [65] $end
+$var wire 1 1 patch_data [64] $end
+$var wire 1 2 patch_data [63] $end
+$var wire 1 3 patch_data [62] $end
+$var wire 1 4 patch_data [61] $end
+$var wire 1 5 patch_data [60] $end
+$var wire 1 6 patch_data [59] $end
+$var wire 1 7 patch_data [58] $end
+$var wire 1 8 patch_data [57] $end
+$var wire 1 9 patch_data [56] $end
+$var wire 1 : patch_data [55] $end
+$var wire 1 ; patch_data [54] $end
+$var wire 1 < patch_data [53] $end
+$var wire 1 = patch_data [52] $end
+$var wire 1 > patch_data [51] $end
+$var wire 1 ? patch_data [50] $end
+$var wire 1 @ patch_data [49] $end
+$var wire 1 A patch_data [48] $end
+$var wire 1 B patch_data [47] $end
+$var wire 1 C patch_data [46] $end
+$var wire 1 D patch_data [45] $end
+$var wire 1 E patch_data [44] $end
+$var wire 1 F patch_data [43] $end
+$var wire 1 G patch_data [42] $end
+$var wire 1 H patch_data [41] $end
+$var wire 1 I patch_data [40] $end
+$var wire 1 J patch_data [39] $end
+$var wire 1 K patch_data [38] $end
+$var wire 1 L patch_data [37] $end
+$var wire 1 M patch_data [36] $end
+$var wire 1 N patch_data [35] $end
+$var wire 1 O patch_data [34] $end
+$var wire 1 P patch_data [33] $end
+$var wire 1 Q patch_data [32] $end
+$var wire 1 R patch_data [31] $end
+$var wire 1 S patch_data [30] $end
+$var wire 1 T patch_data [29] $end
+$var wire 1 U patch_data [28] $end
+$var wire 1 V patch_data [27] $end
+$var wire 1 W patch_data [26] $end
+$var wire 1 X patch_data [25] $end
+$var wire 1 Y patch_data [24] $end
+$var wire 1 Z patch_data [23] $end
+$var wire 1 [ patch_data [22] $end
+$var wire 1 \ patch_data [21] $end
+$var wire 1 ] patch_data [20] $end
+$var wire 1 ^ patch_data [19] $end
+$var wire 1 _ patch_data [18] $end
+$var wire 1 ` patch_data [17] $end
+$var wire 1 a patch_data [16] $end
+$var wire 1 b patch_data [15] $end
+$var wire 1 c patch_data [14] $end
+$var wire 1 d patch_data [13] $end
+$var wire 1 e patch_data [12] $end
+$var wire 1 f patch_data [11] $end
+$var wire 1 g patch_data [10] $end
+$var wire 1 h patch_data [9] $end
+$var wire 1 i patch_data [8] $end
+$var wire 1 j patch_data [7] $end
+$var wire 1 k patch_data [6] $end
+$var wire 1 l patch_data [5] $end
+$var wire 1 m patch_data [4] $end
+$var wire 1 n patch_data [3] $end
+$var wire 1 o patch_data [2] $end
+$var wire 1 p patch_data [1] $end
+$var wire 1 q patch_data [0] $end
+$var wire 1 r patch_valid $end
+
+$scope task send_column $end
+$var reg 8 s r0 [7:0] $end
+$var reg 8 t r1 [7:0] $end
+$var reg 8 u r2 [7:0] $end
+$upscope $end
+
+$scope module dut $end
+$var parameter 32 v DATA_WIDTH $end
+$var wire 1 w clk $end
+$var wire 1 x rst_n $end
+$var wire 1 y pixel_valid $end
+$var wire 1 z col_window_clear $end
+$var wire 1 { window_clear $end
+$var wire 1 | row0_pixel [7] $end
+$var wire 1 } row0_pixel [6] $end
+$var wire 1 ~ row0_pixel [5] $end
+$var wire 1 !! row0_pixel [4] $end
+$var wire 1 "! row0_pixel [3] $end
+$var wire 1 #! row0_pixel [2] $end
+$var wire 1 $! row0_pixel [1] $end
+$var wire 1 %! row0_pixel [0] $end
+$var wire 1 &! row1_pixel [7] $end
+$var wire 1 '! row1_pixel [6] $end
+$var wire 1 (! row1_pixel [5] $end
+$var wire 1 )! row1_pixel [4] $end
+$var wire 1 *! row1_pixel [3] $end
+$var wire 1 +! row1_pixel [2] $end
+$var wire 1 ,! row1_pixel [1] $end
+$var wire 1 -! row1_pixel [0] $end
+$var wire 1 .! row2_pixel [7] $end
+$var wire 1 /! row2_pixel [6] $end
+$var wire 1 0! row2_pixel [5] $end
+$var wire 1 1! row2_pixel [4] $end
+$var wire 1 2! row2_pixel [3] $end
+$var wire 1 3! row2_pixel [2] $end
+$var wire 1 4! row2_pixel [1] $end
+$var wire 1 5! row2_pixel [0] $end
+$var wire 1 * patch_data [71] $end
+$var wire 1 + patch_data [70] $end
+$var wire 1 , patch_data [69] $end
+$var wire 1 - patch_data [68] $end
+$var wire 1 . patch_data [67] $end
+$var wire 1 / patch_data [66] $end
+$var wire 1 0 patch_data [65] $end
+$var wire 1 1 patch_data [64] $end
+$var wire 1 2 patch_data [63] $end
+$var wire 1 3 patch_data [62] $end
+$var wire 1 4 patch_data [61] $end
+$var wire 1 5 patch_data [60] $end
+$var wire 1 6 patch_data [59] $end
+$var wire 1 7 patch_data [58] $end
+$var wire 1 8 patch_data [57] $end
+$var wire 1 9 patch_data [56] $end
+$var wire 1 : patch_data [55] $end
+$var wire 1 ; patch_data [54] $end
+$var wire 1 < patch_data [53] $end
+$var wire 1 = patch_data [52] $end
+$var wire 1 > patch_data [51] $end
+$var wire 1 ? patch_data [50] $end
+$var wire 1 @ patch_data [49] $end
+$var wire 1 A patch_data [48] $end
+$var wire 1 B patch_data [47] $end
+$var wire 1 C patch_data [46] $end
+$var wire 1 D patch_data [45] $end
+$var wire 1 E patch_data [44] $end
+$var wire 1 F patch_data [43] $end
+$var wire 1 G patch_data [42] $end
+$var wire 1 H patch_data [41] $end
+$var wire 1 I patch_data [40] $end
+$var wire 1 J patch_data [39] $end
+$var wire 1 K patch_data [38] $end
+$var wire 1 L patch_data [37] $end
+$var wire 1 M patch_data [36] $end
+$var wire 1 N patch_data [35] $end
+$var wire 1 O patch_data [34] $end
+$var wire 1 P patch_data [33] $end
+$var wire 1 Q patch_data [32] $end
+$var wire 1 R patch_data [31] $end
+$var wire 1 S patch_data [30] $end
+$var wire 1 T patch_data [29] $end
+$var wire 1 U patch_data [28] $end
+$var wire 1 V patch_data [27] $end
+$var wire 1 W patch_data [26] $end
+$var wire 1 X patch_data [25] $end
+$var wire 1 Y patch_data [24] $end
+$var wire 1 Z patch_data [23] $end
+$var wire 1 [ patch_data [22] $end
+$var wire 1 \ patch_data [21] $end
+$var wire 1 ] patch_data [20] $end
+$var wire 1 ^ patch_data [19] $end
+$var wire 1 _ patch_data [18] $end
+$var wire 1 ` patch_data [17] $end
+$var wire 1 a patch_data [16] $end
+$var wire 1 b patch_data [15] $end
+$var wire 1 c patch_data [14] $end
+$var wire 1 d patch_data [13] $end
+$var wire 1 e patch_data [12] $end
+$var wire 1 f patch_data [11] $end
+$var wire 1 g patch_data [10] $end
+$var wire 1 h patch_data [9] $end
+$var wire 1 i patch_data [8] $end
+$var wire 1 j patch_data [7] $end
+$var wire 1 k patch_data [6] $end
+$var wire 1 l patch_data [5] $end
+$var wire 1 m patch_data [4] $end
+$var wire 1 n patch_data [3] $end
+$var wire 1 o patch_data [2] $end
+$var wire 1 p patch_data [1] $end
+$var wire 1 q patch_data [0] $end
+$var reg 1 6! patch_valid $end
+$var reg 8 7! win_00 [7:0] $end
+$var reg 8 8! win_01 [7:0] $end
+$var reg 8 9! win_02 [7:0] $end
+$var reg 8 :! win_10 [7:0] $end
+$var reg 8 ;! win_11 [7:0] $end
+$var reg 8 <! win_12 [7:0] $end
+$var reg 8 =! win_20 [7:0] $end
+$var reg 8 >! win_21 [7:0] $end
+$var reg 8 ?! win_22 [7:0] $end
+$var reg 2 @! col_fill_cnt [1:0] $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+0"
+0#
+0$
+0%
+0&
+b0 '
+b0 (
+b0 )
+06!
+b0 7!
+b0 8!
+b0 9!
+b0 :!
+b0 ;!
+b0 <!
+b0 =!
+b0 >!
+b0 ?!
+b0 @!
+bx s
+bx t
+bx u
+b1000 !
+b1000 v
+0q
+0p
+0o
+0n
+0m
+0l
+0k
+0j
+0i
+0h
+0g
+0f
+0e
+0d
+0c
+0b
+0a
+0`
+0_
+0^
+0]
+0\
+0[
+0Z
+0Y
+0X
+0W
+0V
+0U
+0T
+0S
+0R
+0Q
+0P
+0O
+0N
+0M
+0L
+0K
+0J
+0I
+0H
+0G
+0F
+0E
+0D
+0C
+0B
+0A
+0@
+0?
+0>
+0=
+0<
+0;
+0:
+09
+08
+07
+06
+05
+04
+03
+02
+01
+00
+0/
+0.
+0-
+0,
+0+
+0*
+0r
+05!
+04!
+03!
+02!
+01!
+00!
+0/!
+0.!
+0-!
+0,!
+0+!
+0*!
+0)!
+0(!
+0'!
+0&!
+0%!
+0$!
+0#!
+0"!
+0!!
+0~
+0}
+0|
+0{
+0z
+0y
+0x
+0w
+$end
+#5000
+1"
+1w
+#10000
+0"
+0w
+#15000
+1"
+1w
+#20000
+1#
+0"
+1x
+0w
+1&
+1{
+#25000
+1"
+1w
+#30000
+0"
+0w
+0&
+b0 s
+b1010 t
+b10100 u
+0{
+#35000
+1"
+1w
+#40000
+0"
+0w
+b1010 (
+b10100 )
+1$
+13!
+11!
+1,!
+1*!
+1y
+#45000
+1"
+1w
+b1010 <!
+b10100 ?!
+b1 @!
+1o
+1m
+1X
+1V
+#46000
+0$
+b1 s
+b1011 t
+b10101 u
+0y
+#50000
+0"
+0w
+b1 '
+b1011 (
+b10101 )
+1$
+15!
+1-!
+1%!
+1y
+#55000
+1"
+1w
+b1 9!
+b1010 ;!
+b1011 <!
+b10100 >!
+b10101 ?!
+b10 @!
+1q
+1g
+1e
+1Y
+1P
+1N
+1A
+#56000
+0$
+b10 s
+b1100 t
+b10110 u
+0y
+#60000
+0"
+0w
+b10 '
+b1100 (
+b10110 )
+1$
+05!
+14!
+0-!
+0,!
+1+!
+0%!
+1$!
+1y
+#65000
+1"
+1w
+b1 8!
+b10 9!
+b1010 :!
+b1011 ;!
+b1100 <!
+b10100 =!
+b10101 >!
+b10110 ?!
+b11 @!
+16!
+0q
+1p
+1i
+1_
+1]
+0Y
+0X
+1W
+1Q
+1H
+1F
+0A
+1@
+19
+1r
+#66000
+0$
+b11 s
+b1101 t
+b10111 u
+0y
+#70000
+0"
+0w
+b11 '
+b1101 (
+b10111 )
+1$
+15!
+1-!
+1%!
+1y
+#75000
+1"
+1w
+b1 7!
+b10 8!
+b11 9!
+b1011 :!
+b1100 ;!
+b1101 <!
+b10101 =!
+b10110 >!
+b10111 ?!
+1q
+0i
+1h
+1a
+1Y
+0Q
+0P
+1O
+1I
+1A
+09
+18
+11
+#76000
+0$
+b100 s
+b1110 t
+b11000 u
+0y
+#80000
+0"
+0w
+b100 '
+b1110 (
+b11000 )
+1$
+05!
+04!
+03!
+12!
+0-!
+1,!
+0%!
+0$!
+1#!
+1y
+#85000
+1"
+1w
+b10 7!
+b11 8!
+b100 9!
+b1100 :!
+b1101 ;!
+b1110 <!
+b10110 =!
+b10111 >!
+b11000 ?!
+0q
+0p
+0o
+1n
+1i
+0a
+1`
+0Y
+1X
+1Q
+0I
+0H
+1G
+0A
+0@
+1?
+19
+01
+10
+#86000
+0$
+b101 s
+b1111 t
+b11001 u
+0y
+#90000
+0"
+0w
+b101 '
+b1111 (
+b11001 )
+1$
+15!
+1-!
+1%!
+1y
+#95000
+1"
+1w
+b11 7!
+b100 8!
+b101 9!
+b1101 :!
+b1110 ;!
+b1111 <!
+b10111 =!
+b11000 >!
+b11001 ?!
+1q
+0i
+0h
+0g
+1f
+1a
+1Y
+0Q
+1P
+1I
+1A
+09
+08
+17
+11
+#96000
+0$
+0y
+#100000
+0"
+0w
+1%
+1z
+#105000
+1"
+1w
+b0 @!
+06!
+0r
+#110000
+0"
+0w
+0%
+0z
+#115000
+1"
+1w
+#120000
+0"
+0w
+#125000
+1"
+1w
+#130000
+0"
+0w
+#135000
+1"
+1w
+#140000
+0"
+0w
+#145000
+1"
+1w
+#150000
+0"
+0w
+#155000
+1"
+1w
