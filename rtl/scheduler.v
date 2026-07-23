@@ -7,7 +7,6 @@ module scheduler #(
     input  wire        clk,
     input  wire        rst_n,
 
-    // ---- RISC-V Controller (Configuration Registers / AXI4-Lite) ----
     input  wire        start,
     input  wire        layer_cfg_valid,
     input  wire [3:0]  kernel_size,
@@ -23,34 +22,32 @@ module scheduler #(
     output reg  [2:0]  error_code,   // 000=none,001=DMA,010=PE,100=Patch,101=InvalidConfig,110=FC
     output reg  [3:0]  sched_state,
 
-    // ---- Sliding Window Generator (nội bộ Nhóm 4) ----
+    //Sliding Window Generator
     output reg         sw_load_en,
     output reg  [3:0]  sw_kernel_cfg,
     output reg  [3:0]  sw_stride_cfg,
     output reg  [3:0]  sw_padding_cfg,
     input  wire        patch_valid,
-    input  wire        patch_last,        // Patch cuối cùng của lớp hiện tại
+    input  wire        patch_last,        
 
-    // ---- PE Array / Compute Engine (Nhóm 1) ----
-    // ĐÃ XÁC NHẬN: MAC + ReLU + Pooling chạy pipeline nội bộ trong khối này,
-    // Scheduler chỉ cần 1 tín hiệu pe_done duy nhất, không cần act_en/pool_en/pool_done.
+    //PE Array / Compute Engine
     output reg         pe_compute_en,
     output reg         pe_layer_has_pooling, // báo cho Compute Engine biết có bật Pool không
     input  wire        pe_ready,
-    input  wire        pe_done,           // MAC + ReLU + Pool đã xong cho Patch này
+    input  wire        pe_done,      
 
-    // ---- FC Engine (Nhóm 1, sau khi hết lớp Convolution) ----
+    //FC Engine (sau khi hết lớp Convolution)
     output reg         fc_start,
     input  wire        fc_done,
 
-    // ---- Memory Architecture (Nhóm 2) ----
+    //Memory Architecture
     output reg         buffer_swap,
     input  wire        bram_ready,
     output reg         dma_start,
     input  wire        dma_done
 );
 
-    // ---- Mã hoá trạng thái (v5 - 13 trạng thái) ----
+    //Mã hoá trạng thái 
     localparam ST_IDLE         = 4'd0;
     localparam ST_READ_CONFIG  = 4'd1;
     localparam ST_CHECK_CONFIG = 4'd2;
@@ -93,7 +90,7 @@ module scheduler #(
 
     wire cfg_invalid = (kernel_r == 4'd0) || (stride_r == 4'd0);
 
-    // ---- Thanh ghi trạng thái (đồng bộ) ----
+    // Thanh ghi trạng thái
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             state <= ST_IDLE;
@@ -103,7 +100,7 @@ module scheduler #(
             state <= next_state;
     end
 
-    // ---- Bộ đếm timeout ----
+    // Bộ đếm timeout
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             wait_timer <= 16'd0;
@@ -113,7 +110,7 @@ module scheduler #(
             wait_timer <= wait_timer + 16'd1;
     end
 
-    // ---- Logic chuyển trạng thái kế tiếp (tổ hợp) ----
+    // Logic chuyển trạng thái kế tiếp
     always @(*) begin
         next_state = state;
         case (state)
@@ -142,8 +139,6 @@ module scheduler #(
                 if (pe_ready) next_state = ST_WAIT_PE;
 
             ST_WAIT_PE:
-                // pe_done = đã xong MAC + ReLU + Pool cho Patch này (Nhóm 1 xác nhận
-                // 3 bước này chạy pipeline nội bộ, không cần Scheduler điều khiển riêng)
                 if (pe_done) begin
                     if (!patch_last)
                         next_state = ST_START_WINDOW;   // còn Patch trong lớp -> lặp lại
@@ -163,10 +158,6 @@ module scheduler #(
                 next_state = ST_WAIT_FC;
 
             ST_WAIT_FC:
-                // TODO: hiện chỉ hỗ trợ 1 lần gọi FC engine duy nhất (giả định FC
-                // Engine của Nhóm 1 tự xử lý nội bộ FC1->FC2->Softmax). Nếu Nhóm 1
-                // cần Scheduler điều phối từng lớp FC riêng lẻ, cần bổ sung vòng lặp
-                // tương tự CHECK_LAYER ở đây - CHƯA XÁC NHẬN, cần hỏi lại Nhóm 1.
                 if (fc_done) next_state = ST_DONE;
 
             ST_DONE:
@@ -177,7 +168,7 @@ module scheduler #(
         endcase
     end
 
-    // ---- Logic đầu ra & thanh ghi nội bộ (đồng bộ) ----
+    // Logic đầu ra & thanh ghi nội bộ
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             busy                 <= 1'b0;
