@@ -2,10 +2,9 @@
 
 // ============================================================================
 // MODULE: conv1_top
-// Ch?c n?ng: Top-level TÌch ch?p Conv1 (28x28x1 -> 26x26x6)
-//            - TÌch h?p Line Buffer (v3) + Window Generator (v3) + PE Array (Generate).
-//            - Ph‚n t·ch chu?n x·c ?? r?ng bit: PATCH_ADDR_WIDTH (10-bit cho patch_cnt)
-//              v‡ OUTPUT_ADDR_WIDTH (12-bit cho out_rd_addr).
+// Chuc nang: Top-level T√≠ch chap Conv1 (28x28x1 -> 26x26x6)
+//            - T√≠ch h?p Line Buffer (v3) + Window Generator (v3) + PE Array (Generate)
+//              v√† OUTPUT_ADDR_WIDTH (12-bit cho out_rd_addr).
 // ============================================================================
 
 module conv1_top_ver2 #(
@@ -20,12 +19,12 @@ module conv1_top_ver2 #(
     input  wire                         rst_n,
 
     // Giao di?n ?i?u khi?n FSM
-    input  wire                         start,        // B?t 1 clock ?? b?t ??u Frame m?i
-    output wire                         ready,        // B·o h? th?ng r?nh (ready = 1)
-    output wire                         done,         // B·o ho‡n th‡nh to‡n b? Frame (4056 pixels)
+    input  wire                         start,        // Bat 1 clock ?? bat dau Frame moi
+    output wire                         ready,        // B√°o he thong ranh (ready = 1)
+    output wire                         done,         // B√°o ho√†n th√†nh to√†n bo Frame (4056 pixels)
 
-    // Giao di?n Stream Pixel ??u v‡o
-    input  wire                         pixel_valid,  // C? b·o pixel_in h?p l?
+    // Giao di?n Stream Pixel ??u v√†o
+    input  wire                         pixel_valid,  // C? b√°o pixel_in h?p l?
     input  wire signed [DATA_WIDTH-1:0] pixel_in,     // D? li?u Pixel INT8
 
     // Giao di?n ??c BRAM Feature Map ??u ra (Linh ho?t ?? r?ng bit ??a ch? OUTPUT_ADDR_WIDTH)
@@ -41,7 +40,7 @@ module conv1_top_ver2 #(
     localparam PATCH_COUNT      = OUTPUT_WIDTH * OUTPUT_HEIGHT;  // 676
     localparam OUTPUT_SIZE      = C_OUT * PATCH_COUNT;            // 4056
 
-    // T·ch b?ch 2 tham s? ?? r?ng bus ??a ch?
+    // T√°ch b?ch 2 tham s? ?? r?ng bus ??a ch?
     localparam PATCH_ADDR_WIDTH  = (PATCH_COUNT <= 1) ? 1 : $clog2(PATCH_COUNT); // 10-bit (0..675)
     localparam OUTPUT_ADDR_WIDTH = (OUTPUT_SIZE <= 1)  ? 1 : $clog2(OUTPUT_SIZE);  // 12-bit (0..4055)
 
@@ -52,15 +51,15 @@ module conv1_top_ver2 #(
     assign ready = !busy;
     assign done  = done_reg;
 
-    // Gate tÌn hi?u stream an to‡n: Ch? cho phÈp pixel ?i v‡o Line Buffer khi m?ch BUSY
+    // Gate t√≠n hi?u stream an to√†n: Ch? cho ph√©p pixel ?i v√†o Line Buffer khi m?ch BUSY
     wire pixel_valid_gate;
     assign pixel_valid_gate = pixel_valid && busy;
 
-    // D‚y n?i Stage 1 (Line Buffer) -> Stage 2 (Window Gen)
+    // D√¢y n?i Stage 1 (Line Buffer) -> Stage 2 (Window Gen)
     wire [DATA_WIDTH-1:0] row0_pixel, row1_pixel, row2_pixel;
     wire                  rows_valid, new_row;
 
-    // D‚y n?i Stage 2 (Window Gen) -> PE Array
+    // D√¢y n?i Stage 2 (Window Gen) -> PE Array
     wire [DATA_WIDTH*9-1:0] patch_3x3_data;
     wire                    patch_3x3_valid;
 
@@ -124,7 +123,7 @@ module conv1_top_ver2 #(
         $readmemh("weights_hex/conv1_shift.hex",      c1_shift);
     end
 
-    // T·ch Patch 72-bit th‡nh 9 Pixels 8-bit cÛ d?u (p0 -> p8)
+    // T√°ch Patch 72-bit th√†nh 9 Pixels 8-bit c√≥ d?u (p0 -> p8)
     wire signed [DATA_WIDTH-1:0] p0, p1, p2, p3, p4, p5, p6, p7, p8;
     assign p0 = patch_3x3_data[71:64]; assign p1 = patch_3x3_data[63:56]; assign p2 = patch_3x3_data[55:48];
     assign p3 = patch_3x3_data[47:40]; assign p4 = patch_3x3_data[39:32]; assign p5 = patch_3x3_data[31:24];
@@ -175,7 +174,7 @@ module conv1_top_ver2 #(
     reg signed [DATA_WIDTH-1:0] c1_out [0:OUTPUT_SIZE-1];
     assign out_rd_data = c1_out[out_rd_addr];
 
-    // S? d?ng PATCH_ADDR_WIDTH (10-bit) chu?n x·c cho b? ??m patch_cnt (0..675)
+    // S? d?ng PATCH_ADDR_WIDTH (10-bit) chu?n x√°c cho b? ??m patch_cnt (0..675)
     reg [PATCH_ADDR_WIDTH-1:0] patch_cnt;
     integer ch_i;
 
@@ -185,7 +184,7 @@ module conv1_top_ver2 #(
         end else if (frame_clear) begin
             patch_cnt <= {PATCH_ADDR_WIDTH{1'b0}};
         end else if (pe_valid[0]) begin
-            // Ghi k?t qu? C_OUT Channels song song v‡o BRAM
+            // Ghi k?t qu? C_OUT Channels song song v√†o BRAM
             for (ch_i = 0; ch_i < C_OUT; ch_i = ch_i + 1) begin
                 c1_out[ch_i * PATCH_COUNT + patch_cnt] <= pe_output[ch_i];
             end
@@ -212,13 +211,13 @@ module conv1_top_ver2 #(
 
             if (start && !busy) begin
                 busy        <= 1'b1;
-                frame_clear <= 1'b1; // Ph·t xung clear 1 clock nh?p ??u
+                frame_clear <= 1'b1; // Ph√°t xung clear 1 clock nh?p ??u
             end
 
-            // Ki?m tra khi ghi xong patch cu?i c˘ng (Patch 675)
+            // Ki?m tra khi ghi xong patch cu?i c√πng (Patch 675)
             if (pe_valid[0] && (patch_cnt == PATCH_COUNT - 1)) begin
                 busy     <= 1'b0;
-                done_reg <= 1'b1; // B·o DONE ho‡n th‡nh Frame!
+                done_reg <= 1'b1; // B√°o DONE ho√†n th√†nh Frame!
             end
         end
     end
