@@ -1,371 +1,472 @@
-# 🚀 Group 04 - CNN Inference Accelerator IP Core trên FPGA ZCU102
+# Group 04 - CNN Feature Extractor IP Core
 
-> **Đồ án Thực tập PTIT - Nhóm 04**  
-> **Chủ đề:** Thiết kế & Tối ưu hóa Vi kiến trúc Bộ tăng tốc Mạng Thần kinh Cuộn (CNN Inference Accelerator) cho Mô hình LeNet-5 (Feature Extractor Layer) trên FPGA Xilinx Zynq UltraScale+ ZCU102 / Intel Cyclone V.
+> Đồ án Thực tập PTIT - Nhóm 04
+>
+> Repository này hiện thực phần Feature Extractor của LeNet-5 bằng Verilog HDL theo hướng streaming pipeline. Mục tiêu là tái sử dụng dữ liệu qua line buffer và sliding window, giảm truy cập bộ nhớ trung gian, và tạo đầu ra 5x5x16 sẵn sàng ghép với khối FC hoặc phần xử lý phía sau.
 
----
+## Mục Lục
 
-## 📑 Mục Lục
-1. [📌 Giới Thiệu Tổng Quan](#-giới-thiệu-tổng-quan)
-2. [🏗️ Kiến Trúc Phần Cứng & Luồng Dữ Liệu](#-kiến-trúc-phần-cứng--luồng-dữ-liệu)
-   - [2.1 Sơ Đồ Kiến Trúc Hệ Thống (Hardware Architecture)](#21-sơ-đồ-kiến-trúc-hệ-thống-hardware-architecture)
-   - [2.2 Luồng Xử Lý Stream Dữ Liệu (Dataflow Pipeline)](#22-luồng-xử-lý-stream-dữ-liệu-dataflow-pipeline)
-   - [2.3 Giao Thức Điều Khiển (Control & Handshake FSM)](#23-giao-thức-điều-khiển-control--handshake-fsm)
-3. [📊 Thông Số Kỹ Thuật Vi Kiến Trúc (Hardware Specifications)](#-thông-số-kỹ-thuật-vi-kiến-trúc-hardware-specifications)
-4. [📂 Phân Tích Kỹ Lưỡng Thư Mục Dự Án](#-phân-tích-kỹ-lưỡng-thư-mục-dự-án)
-   - [4.1 Bảng Tổng Quan Thư Mục & Giá Trị Sử Dụng](#41-bảng-tổng-quan-thư-mục--giá-trị-sử-dụng)
-   - [4.2 Thư Mục `rtl/` (Mã Nguồn Thiết Kế RTL Verilog)](#42-thư-mục-rtl-mã-nguồn-thiết-kế-rtl-verilog)
-   - [4.3 Thư Mục `testbench/` (Môi Trường Mô Phỏng & Kiểm Thử)](#43-thư-mục-testbench-môi-trường-mô-phỏng--kiểm-thử)
-   - [4.4 Thư Mục `doc/` (Tài Liệu Kỹ Thuật & Bài Báo Nghiên Cứu)](#44-thư-mục-doc-tài-liệu-kỹ-thuật--bài-báo-nghiên-cứu)
-   - [4.5 Thư Mục `images/` (Hình Ảnh Kiến Trúc & Flowchart)](#45-thư-mục-images-hình-ảnh-kiến-trúc--flowchart)
-   - [4.6 Thư Mục `report/` (Báo Cáo Kỹ Thuật & Slide Bảo Vệ)](#46-thư-mục-report-báo-cáo-kỹ-thuật--slide-bảo-vệ)
-   - [4.7 Thư Mục `scripts/`, `software/`, `src/`](#47-thư-mục-scripts-software-src)
-5. [🛠️ Hướng Dẫn Mô Phỏng & Kiểm Thử Phần Cứng](#-hướng-dẫn-mô-phỏng--kiểm-thử-phần-cứng)
-   - [5.1 Yêu Cầu Công Cụ (Tools & Environment)](#51-yêu-cầu-công-cụ-tools--environment)
-   - [5.2 Chạy Mô Phỏng Với Vivado / ModelSim](#52-chạy-mô-phỏng-với-vivado--modelsim)
-   - [5.3 Chạy Dự Án Quartus Prime (Sliding Window)](#53-chạy-dự-án-quartus-prime-sliding-window)
-6. [💡 Định Hướng Phát Triển Tiếp Theo](#-định-hướng-phát-triển-tiếp-theo)
+1. [Tổng Quan](#tổng-quan)
+2. [Kiến Trúc Xử Lý](#kiến-trúc-xử-lý)
+3. [Bản Đồ Repository](#bản-đồ-repository)
+4. [Phân Tích Từng Thư Mục](#phân-tích-từng-thư-mục)
+5. [Các Luồng Chạy Chính](#các-luồng-chạy-chính)
+6. [Tài Liệu & Hình Ảnh](#tài-liệu--hình-ảnh)
+7. [Ghi Chú Khi Đọc Source](#ghi-chú-khi-đọc-source)
 
----
+## Tổng Quan
 
-## 📌 Giới Thiệu Tổng Quan
+Repository này không chỉ là một bộ RTL đơn lẻ. Nó gồm đủ các phần để theo dõi một flow thiết kế phần cứng hoàn chỉnh:
 
-Dự án **Group4** tập trung nghiên cứu, thiết kế vi kiến trúc phần cứng tối ưu cho phần trích xuất đặc trưng (**Feature Extractor Core**) của mạng thần kinh cuộn **LeNet-5** chuyên dụng cho bài toán nhận dạng chữ số viết tay **MNIST** ($28 \times 28$ grayscale pixels).
+- RTL cho các khối xử lý lõi và các phiên bản phát triển theo từng giai đoạn.
+- Testbench cho từng khối, từng stage, và các bộ mô phỏng tích hợp.
+- Tài liệu tham khảo, báo cáo, slide, và hình minh họa kiến trúc.
+- Các thư mục chờ mở rộng cho script, software, và nguồn tham chiếu.
 
-Hệ thống được thiết kế hoàn toàn bằng ngôn ngữ **Verilog HDL**, tối ưu hóa cấu trúc luồng dữ liệu (Dataflow Streaming Pipeline), tái sử dụng dữ liệu bộ nhớ qua **Line Buffer Matrix** và **Sliding Window Generator**, giúp giảm thiểu tối đa băng thông truy xuất BRAM/RAM ngoại vi và đạt throughput cao.
+Chuỗi xử lý chính đi từ ảnh 28x28x1 sang feature map 5x5x16 qua các stage:
 
-> [!NOTE]
-> Khối Feature Extractor đóng vai trò là IP Core phần cứng, có khả năng kết nối trực tiếp với SoC ARM Processing System (PS) thông qua chuẩn giao tiếp **AXI4-Lite / AXI-Stream** hoặc kết nối tới khối Fully Connected (FC) Engine phía sau.
+1. Nhận pixel stream đầu vào.
+2. Tạo line buffer cho ảnh.
+3. Sinh patch 3x3 bằng sliding window.
+4. Tính Conv1 với 6 filter.
+5. Pool1 để giảm xuống 13x13x6.
+6. Gom 6 channel patch để cấp cho Conv2.
+7. Tính Conv2 với 16 filter.
+8. Pool2 để tạo output 5x5x16.
+9. Đóng gói output cho khối phía sau.
 
----
+## Kiến Trúc Xử Lý
 
-## 🏗️ Kiến Trúc Phần Cứng & Luồng Dữ Liệu
-
-### 2.1 Sơ Đồ Kiến Trúc Hệ Thống (Hardware Architecture)
-
-Kiến trúc tổng thể kết nối liên hoàn giữa **Conv1 + Pool1** và **Conv2 + Pool2** dưới dạng luồng dữ liệu liên tục (Pipeline):
+### Sơ Đồ Tổng Thể
 
 ```mermaid
-graph TD
-    subgraph INPUT ["Input Interface"]
-        PixelIn["Pixel Stream (28x28x1 INT8)<br/>pixel_in / pixel_valid"]
-    end
-
-    subgraph STAGE1 ["Stage 1: Conv1 + Pool1 (28x28x1 -> 13x13x6)"]
-        LB1["Line Buffer Model 1<br/>(Buffer 2 dòng ảnh 28px)"]
-        WG1["Sliding Window Gen 1<br/>(Ma trận cửa sổ 3x3)"]
-        PE1["PE Conv1 Array (6 PEs)<br/>MAC Matrix + Bias + ReLU"]
-        POOL1["Max Pooling 1 (2x2)<br/>Stride 2 -> 13x13x6"]
-        
-        PixelIn --> LB1
-        LB1 --> WG1
-        WG1 --> PE1
-        PE1 --> POOL1
-    end
-
-    subgraph STAGE2 ["Stage 2: Conv2 + Pool2 (13x13x6 -> 5x5x16)"]
-        CPB["Channel Patch Buffer<br/>(Gộp 6 channels patch 3x3)"]
-        PE2["PE Conv2 Array (16 PEs)<br/>MAC Matrix 6ch + Bias + ReLU"]
-        POOL2["Max Pooling 2 (2x2)<br/>Merge Pool -> 5x5x16"]
-
-        POOL1 -- "pool1_bus_flattened (48-bit)" --> CPB
-        CPB --> PE2
-        PE2 --> POOL2
-    end
-
-    subgraph OUTPUT ["Output / AXI Interface"]
-        AXI["AXI4-Lite / Stream Wrapper<br/>(Bus 128-bit: 16 ch x 8-bit)"]
-        POOL2 -- "pool2_out_ch / valid / last" --> AXI
-        AXI --> OutStream["Tín hiệu ra FC Engine / RAM Buffer"]
-    end
-
-    style INPUT fill:#1f2937,stroke:#4b5563,color:#fff
-    style STAGE1 fill:#1e3a8a,stroke:#3b82f6,color:#fff
-    style STAGE2 fill:#065f46,stroke:#10b981,color:#fff
-    style OUTPUT fill:#581c87,stroke:#a855f7,color:#fff
+flowchart LR
+    IN[Pixel stream 28x28x1\nINT8] --> LB[Line buffer]
+    LB --> WG[Window generator 3x3]
+    WG --> C1[Conv1 PE array\n6 filters]
+    C1 --> P1[Pool1 2x2 stride 2]
+    P1 --> CPB[Channel patch buffer\n3x3x6]
+    CPB --> C2[Conv2 PE array\n16 filters]
+    C2 --> P2[Pool2 2x2 stride 2]
+    P2 --> OUT[Output stream 5x5x16]
 ```
 
----
-
-### 2.2 Luồng Xử Lý Stream Dữ Liệu (Dataflow Pipeline)
-
-Toàn bộ quá trình biến đổi kích thước Feature Map được thực hiện hoàn toàn theo dạng luồng (streaming) mà không cần ghi trung gian ra RAM ngoại vi:
+### Luồng Dữ Liệu
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant In as Pixel Stream (28x28x1)
-    participant C1 as Conv1 Engine (3x3 Kernel, 6 Filter)
-    participant P1 as MaxPool1 (2x2, Stride 2)
-    participant C2 as Conv2 Engine (3x3 Kernel, 16 Filter)
-    participant P2 as MaxPool2 (2x2, Stride 2)
-    participant Out as AXI Bus (128-bit)
+    participant S as Source pixel stream
+    participant L as Line buffer
+    participant W as Window generator
+    participant C1 as Conv1
+    participant P1 as Pool1
+    participant B as Channel patch buffer
+    participant C2 as Conv2
+    participant P2 as Pool2
 
-    In->>C1: Đẩy từng Pixel (8-bit) mỗi chu kỳ clock
-    Note over C1: Line Buffer tạo ma trận 3x3 khi đủ 2 dòng + 3 pixel
-    C1->>P1: Phát Feature Map Conv1 (26x26x6)
-    Note over P1: Giảm kích thước không gian (Downsampling)
-    P1->>C2: Phát Feature Map Pool1 (13x13x6) qua bus 48-bit
-    Note over C2: Channel Patch Buffer đồng bộ 6 kênh đầu vào
-    C2->>P2: Phát Feature Map Conv2 (11x11x16)
-    P2->>Out: Phát Stream Feature Map cuối (5x5x16) qua bus 128-bit
+    S->>L: Đẩy từng pixel của ảnh 28x28
+    L->>W: Xuất 3 hàng pixel cùng cột
+    W->>C1: Tạo patch 3x3 cho Conv1
+    C1->>P1: Xuất feature map 26x26x6
+    P1->>B: Ghép 6 channel thành tensor 3x3x6
+    B->>C2: Cấp dữ liệu cho Conv2
+    C2->>P2: Xuất feature map 11x11x16
+    P2->>OUT: Xuất output 5x5x16
 ```
 
----
+### Điều Khiển Và Handshake
 
-### 2.3 Giao Thức Điều Khiển (Control & Handshake FSM)
-
-Các khối phần cứng trao đổi tín hiệu Handshake nhằm đảm bảo đồng bộ dữ liệu và tiết kiệm năng lượng:
+Thiết kế dùng start/ready/done cho scheduler và valid/last cho từng luồng dữ liệu. Cách này giúp mỗi khối có thể mô phỏng độc lập, nhưng vẫn ghép được thành một pipeline thống nhất.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> IDLE: rst_n = 0 / System Reset
-    IDLE --> READY: Ready to receive frame
-    READY --> COMPUTING: pe_compute_en = 1 & pixel_valid = 1
-    state COMPUTING {
-        [*] --> CONV1_POOL1: Xử lý tầng Conv1 (28x28 -> 13x13)
-        CONV1_POOL1 --> CONV2_POOL2: conv2_start_pulse = 1 (Xung sườn lên)
-        CONV2_POOL2 --> FINISHED: Phát pixel cuối pool2_out_last = 1
-    }
-    COMPUTING --> DONE: pe_done = 1
-    DONE --> IDLE: Chuẩn bị cho ảnh tiếp theo
+    [*] --> IDLE
+    IDLE --> RUNNING: start / pe_compute_en
+    RUNNING --> DRAINING: input frame hoàn tất
+    DRAINING --> DONE: output last / done
+    DONE --> IDLE: frame mới
 ```
 
----
+## Bản Đồ Repository
 
-## 📊 Thông Số Kỹ Thuật Vi Kiến Trúc (Hardware Specifications)
+| Thư mục | Vai trò | Người dùng nhận được gì |
+| --- | --- | --- |
+| `rtl/` | RTL Verilog cho từng khối và các bản ghép theo phiên bản | Mã nguồn phần cứng có thể đọc, mô phỏng và tích hợp vào FPGA |
+| `testbench/` | Testbench cho unit-level, stage-level và system-level | Môi trường kiểm thử để xem waveform, valid/last và hành vi từng stage |
+| `doc/` | PDF tài liệu board và paper tham khảo | Cơ sở lý thuyết, tài liệu phần cứng, hướng dẫn board |
+| `images/` | Hình minh họa kiến trúc và flow | Ảnh dùng để giải thích hệ thống trong báo cáo hoặc slide |
+| `report/` | Báo cáo và slide thực tập | Tài liệu tổng hợp kết quả, biểu đồ và phần trình bày |
+| `scripts/` | Chỗ dành cho script sinh dữ liệu hoặc hỗ trợ mô phỏng | Hiện tại là scaffold, chưa có nội dung triển khai |
+| `software/` | Chỗ dành cho phần mềm chạy trên PS hoặc driver | Hiện tại là scaffold, phục vụ mở rộng về sau |
+| `src/` | Chỗ dành cho golden model, source tham chiếu hoặc HLS | Hiện tại là scaffold, chưa có file thực thi |
 
-| Thông số (Parameter) | Giá trị (Value) | Mô tả chi tiết (Description) |
-| :--- | :--- | :--- |
-| **Ảnh đầu vào (Input)** | $28 \times 28 \times 1$ | Ảnh xám MNIST (Grayscale Image) |
-| **Định dạng dữ liệu** | Fixed-point INT8 (8-bit signed) | Chuẩn hóa số nguyên 8-bit có dấu |
-| **Tầng Conv1** | Kernel $3 \times 3$, Stride 1, 6 Filters | Đầu ra Feature Map: $26 \times 26 \times 6$ |
-| **Tầng Pool1** | Max Pooling $2 \times 2$, Stride 2 | Đầu ra Feature Map: $13 \times 13 \times 6$ |
-| **Tầng Conv2** | Kernel $3 \times 3$, Stride 1, 16 Filters | Đầu ra Feature Map: $11 \times 11 \times 16$ |
-| **Tầng Pool2** | Max Pooling $2 \times 2$, Stride 2 | Đầu ra Feature Map: $5 \times 5 \times 16$ |
-| **Kích thước đầu ra** | $5 \times 5 \times 16$ ($400$ values) | Đẩy trực tiếp sang tầng Fully Connected (FC) |
-| **Băng thông bus đầu ra** | 128-bit Bus ($16 \text{ channels} \times 8 \text{ bits}$) | Truyền song song 16 kênh ra bus bộ nhớ |
-| **Tần số xung Clock** | 100 MHz (Target FPGA ZCU102) | Chu kỳ clock 10ns |
-| **Giao thức điều khiển** | Handshake `valid/ready/last` + AXI4-Lite | Dễ dàng ghép nối DMA / PS Subsystem |
+## Phân Tích Từng Thư Mục
 
----
+### `rtl/`
 
-## 📂 Phân Tích Kỹ Lưỡng Thư Thư Mục Dự Án
+Đây là thư mục quan trọng nhất. Nó chứa toàn bộ mô tả phần cứng và cả các phiên bản phát triển theo từng chặng.
 
-### 4.1 Bảng Tổng Quan Thư Mục & Giá Trị Sử Dụng
-
-| Thư mục | Nội dung chính bên trong | Người dùng sẽ nhận được gì? | Công dụng & Cách khai thác |
-| :--- | :--- | :--- | :--- |
-| 📁 [`rtl/`](rtl/) | Toàn bộ mã Verilog HDL thiết kế phần cứng các khối CNN (`tuan3.1/`, `tuan3.2/`) | Mã nguồn RTL thương mại hóa, synthesized & pipelined | Tổng hợp IP Core bằng Vivado / Quartus, tích hợp vào SOC |
-| 📁 [`testbench/`](testbench/) | Testbench Verilog, script mô phỏng Quartus/ModelSim (`sliding_window/`, `tuan3.1/`, `tuan3.2/`) | Bộ môi trường kiểm thử đầy đủ từ unit test tới full pipeline | Chạy mô phỏng kiểm tra dạng sóng (waveform), latency, accuracy |
-| 📁 [`doc/`](doc/) | User Guide board ZCU102 & 8 Bài báo khoa học quốc tế (`doc/manual/`) | Tài liệu phần cứng gốc của Xilinx + Cơ sở lý thuyết CNN FPGA | Tra cứu sơ đồ chân ZCU102, học thuật thuật toán Line Buffer & Data Reuse |
-| 📁 [`images/`](images/) | 6 hình ảnh sơ đồ kiến trúc, flowchart giải thuật, sơ đồ Line Buffer | Sơ đồ trực quan hóa vi kiến trúc phần cứng | Dùng để học tập, làm báo cáo, slide thuyết trình |
-| 📁 [`report/`](report/) | Báo cáo chi tiết kỹ thuật (`.docx`) & Slide báo cáo đợt thực tập (`.pdf`) | Báo cáo hoàn chỉnh về Latency, Tài nguyên, BRAM, LUT | Tham khảo tài liệu báo cáo thực tập, cấu trúc thuyết minh kỹ thuật |
-| 📁 [`scripts/`](scripts/) | Thư mục chứa script bổ trợ (Python/Bash) | Công cụ sinh dữ liệu kiểm thử, vector ảnh `.MEM` | Chuyển đổi ảnh PNG/JPG sang file hexa INT8 để nạp testbench |
-| 📁 [`software/`](software/) | Thư mục chứa driver / ứng dụng C trên ARM PS | Phần mềm giao tiếp ARM Cortex-A53 với IP Core qua AXI | Lập trình C điều khiển IP core chạy thực tế trên bo mạch |
-| 📁 [`src/`](src/) | Thư mục chứa mã nguồn mở rộng / Vivado HLS | Mã nguồn C/C++ tham chiếu hoặc HLS | Chạy mô hình kiểm tra đối chứng (Golden Model) |
-
----
-
-### 4.2 Thư Thư Mục `rtl/` (Mã Nguồn Thiết Kế RTL Verilog)
-
-Thư mục [`rtl/`](rtl/) chứa toàn bộ mã nguồn mô tả phần cứng (Hardware Description Language) theo các giai đoạn phát triển:
-
-```
+```text
 rtl/
-├── channel_patch_buffer.v          # Bộ đệm Patch 3x3 cho nhiều channel (Ver 1)
-├── channel_patch_buffer_ver3.v     # Bộ đệm Patch 3x3 đa kênh tối ưu Latency (Ver 3)
-├── conv1_pe_ver1.v                 # Khối xử lý tính toán PE cho Conv1 (MAC array + Bias + ReLU)
-├── conv1_top_ver1.v                # Top module tầng Conv1 phiên bản 1
-├── conv1_top_ver2.v                # Top module tầng Conv1 phiên bản 2 (tối ưu pipeline)
-├── line_buffer1.v                  # Khối Line Buffer dòng phiên bản 1
-├── line_buffer_model.v             # Khối Line Buffer dòng phiên bản 2 (RAM/Shift Reg)
-├── line_buffer_model_ver3.v        # Khối Line Buffer chuẩn tối ưu cho ảnh 28x28 (Ver 3)
-├── pooling_conv1_ver1.v            # Khối Max Pooling 2x2 đơn kênh (Ver 1)
-├── sliding_window_top.v            # Top module tạo cửa sổ trượt (Line Buffer + Window Gen)
-├── sliding_window_top_ver3.v       # Top module cửa sổ trượt tối ưu Ver 3
-├── top_sliding_window_ver1.v       # Top module kiểm thử cửa sổ trượt Ver 1
-├── window_gen.v                    # Khối sinh cửa sổ trượt 3x3 từ Line Buffer (Ver 1)
-├── window_generate_ver3.v          # Khối sinh cửa sổ trượt 3x3 (Ver 3)
-├── window_generator_ver2.v        # Khối sinh cửa sổ trượt 3x3 (Ver 2)
-├── tuan3.1/                        # 📁 Phiên bản RTL Ver 3.1 (Ghép nối Conv1+Pool1 và Conv2+Pool2)
-└── tuan3.2/                        # 📁 Phiên bản RTL Ver 3.2 (Phiên bản chuẩn tối ưu nhất)
+├── channel_patch_buffer.v
+├── channel_patch_buffer_ver3.v
+├── conv1_pe_ver1.v
+├── conv1_top_ver1.v
+├── conv1_top_ver2.v
+├── line_buffer1.v
+├── line_buffer_model.v
+├── line_buffer_model_ver3.v
+├── pooling_conv1_ver1.v
+├── sliding_window_top.v
+├── sliding_window_top_ver3.v
+├── top_sliding_window_ver1.v
+├── window_gen.v
+├── window_generate_ver3.v
+├── window_generator_ver2.v
+├── tuan3.1/
+└── tuan3.2/
 ```
 
-#### Phân Tích Các Khối RTL Cốt Lõi (Core RTL Modules):
+#### Nhóm file lõi ở root `rtl/`
 
-1. **`line_buffer_model_ver3.v`**:
-   - **Chức năng:** Nhận stream pixel đầu vào, sử dụng bộ đệm dòng (Shift Registers/FIFO) để giữ 2 dòng ảnh liền kề.
-   - **Đầu ra:** Xuất đồng thời 3 hàng pixel ($3 \times 1$) giúp hệ thống đọc ma trận $3 \times 3$ liên tục mỗi chu kỳ clock.
-2. **`window_generate_ver3.v`**:
-   - **Chức năng:** Nhận 3 hàng pixel từ Line Buffer, đẩy qua thanh ghi trượt để tạo ra ma trận $3 \times 3$ (9 pixels) song song.
-3. **`conv1_pe_ver1.v` & `conv2_pe.v`**:
-   - **Chức năng:** Processing Element (PE) thực hiện 9 phép nhân MAC ($8\text{-bit} \times 8\text{-bit} \rightarrow 16\text{-bit}$), cây cộng (Adder Tree), cộng Bias, qua hàm kích hoạt **ReLU** và cắt/dịch bít định dạng lại INT8.
-4. **`channel_patch_buffer_ver3.v`**:
-   - **Chức năng:** Ghép nối và đồng bộ 6 kênh dữ liệu đầu ra từ Pool1 để chuẩn bị ma trận đầu vào 6-channel $3 \times 3$ cho tầng Conv2.
-5. **`pooling_merge.v`**:
-   - **Chức năng:** Tích hợp bộ đệm dòng và bộ so sánh giá trị lớn nhất (Max Operator) trên cửa sổ $2 \times 2$ cho cả 16 kênh song song.
-6. **`top_conv_feature_extractor.v`** (`rtl/tuan3.2/`):
-   - **Chức năng:** Khối Top Level hợp nhất toàn bộ luồng Conv1 $\rightarrow$ Pool1 $\rightarrow$ Conv2 $\rightarrow$ Pool2 thành 1 IP Core thống nhất.
-7. **`top_conv_axi_wrapper.v` / `top_conv_axi4_lite_wrapper.v`**:
-   - **Chức năng:** Bọc khối Feature Extractor chuẩn giao tiếp AXI4-Stream (`axis_in_valid`, `axis_in_data`, `axis_out_valid`, `axis_out_data`, `axis_out_last`) và AXI4-Lite Control.
+| File | Vai trò chính | Ghi chú sử dụng |
+| --- | --- | --- |
+| `line_buffer1.v` | Phiên bản line buffer sớm | Dùng để xem logic khởi đầu |
+| `line_buffer_model.v` | Bản line buffer cải tiến | Phù hợp khi đối chiếu tiến hóa thiết kế |
+| `line_buffer_model_ver3.v` | Line buffer tối ưu cho luồng 28x28 | Là một trong các khối nền tảng của pipeline hiện tại |
+| `window_gen.v` | Window generator thế hệ đầu | Chủ yếu để tham chiếu lịch sử |
+| `window_generate_ver3.v` | Window generator ổn định hơn | Sinh patch 3x3 từ dữ liệu line buffer |
+| `window_generator_ver2.v` | Phiên bản trung gian | Hữu ích khi so sánh các vòng tối ưu |
+| `sliding_window_top.v` | Top của pipeline sliding window | Ghép line buffer và window generator |
+| `sliding_window_top_ver3.v` | Bản sliding window tối ưu | Dùng trong luồng hệ thống mới hơn |
+| `top_sliding_window_ver1.v` | Top thử nghiệm | Hữu ích khi debug phần sliding window |
+| `conv1_pe_ver1.v` | PE tính Conv1 | Tính MAC 3x3, bias, quantization, ReLU |
+| `pooling_conv1_ver1.v` | Pooling cho Conv1 | Max pooling 2x2 cho stage đầu |
+| `channel_patch_buffer.v` | Bản ghép patch channel cũ | Phục vụ lịch sử phát triển |
+| `channel_patch_buffer_ver3.v` | Bản ghép patch channel tối ưu | Ghép 6 channel từ Pool1 sang Conv2 |
 
----
+#### `rtl/tuan3.1/`
 
-### 4.3 Thư Thư Mục `testbench/` (Môi Trường Mô Phỏng & Kiểm Thử)
+Thư mục này là một mốc ghép stage sớm hơn, đã có pipeline Conv1, Pool1, Conv2, Pool2 nhưng vẫn giữ cấu trúc theo nhánh phát triển cũ.
 
-Thư mục [`testbench/`](testbench/) cung cấp đầy đủ file Verilog Testbench từ mức độ linh kiện (Unit Level) tới toàn bộ hệ thống (System Level):
-
+```text
+rtl/tuan3.1/
+├── channel_patch_buffer_ver3.v
+├── conv1_pe_ver1.v
+├── conv1_top_ver3.v
+├── conv1_top_ver4.v
+├── conv2_pe.v
+├── line_buffer_model_ver3.v
+├── pooling_merge.v
+├── sliding_window_top_ver3.v
+├── top_conv1_pooling_ver1.v
+├── top_conv2_pooling2.v
+├── top_conv2_ver1.v
+├── top_conv_axi4_lite_wrapper.v
+├── top_conv_feature_extractor.v
+└── window_generate_ver3.v
 ```
+
+Nhóm này phù hợp khi bạn muốn:
+
+- xem cách stage được ghép từng bước,
+- đối chiếu giữa các bản top khác nhau,
+- kiểm tra wrapper AXI4-Lite cũ,
+- hoặc đọc lại quá trình tối ưu hóa từ bản đầu đến bản ghép hoàn chỉnh.
+
+#### `rtl/tuan3.2/`
+
+Đây là nhánh sạch hơn và gần với bản dùng thực tế hơn. Nó gom các khối chính theo cách rõ ràng hơn và tách rành mạch từng stage.
+
+```text
+rtl/tuan3.2/
+├── channel_patch_buffer_ver3.v
+├── conv1_pe.v
+├── conv2_pe.v
+├── conv_pool_ver1.v
+├── line_buffer_model_ver3.v
+├── pooling_merge.v
+├── sliding_window_top_ver3.v
+├── top_conv1.v
+├── top_conv1_pooling1.v
+├── top_conv2.v
+├── top_conv2_pooling2.v
+├── top_conv_axi_wrapper.v
+├── top_conv_feature_extractor.v
+└── window_generate_ver3.v
+```
+
+Các file quan trọng nhất ở nhánh này là:
+
+| File | Nội dung |
+| --- | --- |
+| `top_conv_feature_extractor.v` | Top level ghép Conv1 -> Pool1 -> Conv2 -> Pool2 |
+| `top_conv1.v` | Top cho stage Conv1 |
+| `top_conv1_pooling1.v` | Ghép Conv1 với Pool1 |
+| `top_conv2.v` | Top cho stage Conv2 |
+| `top_conv2_pooling2.v` | Ghép Conv2 với Pool2 |
+| `top_conv_axi_wrapper.v` | Wrapper giao tiếp stream/control |
+| `pooling_merge.v` | Khối pooling gộp cho stage nhiều channel |
+| `conv1_pe.v`, `conv2_pe.v` | Khối tính toán PE cho từng stage |
+
+#### Khuyến nghị sử dụng RTL
+
+- Nếu chỉ muốn đọc kiến trúc tổng thể, hãy bắt đầu từ `rtl/tuan3.2/top_conv_feature_extractor.v`.
+- Nếu muốn hiểu từng stage, đọc theo thứ tự: `line_buffer_model_ver3.v` -> `window_generate_ver3.v` -> `conv1_pe.v` -> `top_conv1_pooling1.v` -> `top_conv2_pooling2.v`.
+- Nếu muốn hiểu lịch sử phát triển, đối chiếu thêm với `rtl/tuan3.1/`.
+
+### `testbench/`
+
+Đây là thư mục mô phỏng và kiểm thử. Cấu trúc ở đây cho thấy repo không chỉ có RTL mà còn có bộ test để xác nhận từng khối.
+
+```text
 testbench/
-├── tb_channel_patch_buffer_ver1.v  # Testbench cho bộ đệm Patch kênh Ver 1
-├── tb_channel_patch_ver3.v         # Testbench cho bộ đệm Patch kênh Ver 3
-├── tb_conv1_pe_ver1.v              # Testbench kiểm thử 1 đơn vị PE Conv1
-├── tb_conv1_top_ver1.v             # Testbench cho tầng Conv1 Top
-├── tb_line_buffer1.v               # Testbench kiểm thử khối Line Buffer 1
-├── tb_line_buffer_model.v          # Testbench khối Line Buffer 2
-├── tb_line_buffer_model_ver2.v     # Testbench khối Line Buffer 2
-├── tb_line_ver3.v                  # Testbench kiểm thử Line Buffer Ver 3
-├── tb_sliding_window_top.v         # Testbench khối Sliding Window Top
-├── tb_sliding_window_top_ver2.v    # Testbench khối Sliding Window Top Ver 2
-├── tb_sliding_window_ver3.v        # Testbench khối Sliding Window Ver 3
-├── tb_top_sliding_window_ver21.v   # Testbench toàn diện Cửa sổ trượt
-├── tb_window_gen.v                 # Testbench khối Window Generator
-├── tb_window_gen_ver3.v            # Testbench khối Window Generator Ver 3
-├── tb_window_generate_ver2.v       # Testbench khối Window Generator Ver 2
-├── sliding_window/                 # 📁 Project mô phỏng Intel Quartus Prime & ModelSim
-│   ├── line_buffer1.qpf            # File Project Quartus
-│   ├── line_buffer1.qsf            # File Cấu hình Settings Quartus
-│   └── simulation/modelsim/        # Script .do và kết quả mô phỏng ModelSim
-├── tuan3.1/                        # 📁 Testbench cho các khối thuộc Ver 3.1
-│   ├── tb_conv1_pe_ver1.v
-│   ├── tb_conv1_pool1.v
-│   ├── tb_conv2_pe.v
-│   ├── tb_conv2_pooling2.v
-│   └── tb_conv_extractor.v
-└── tuan3.2/                        # 📁 Testbench hoàn chỉnh nhất cho Ver 3.2
-    ├── tb_conv_extractor.v         # Testbench kiểm thử bộ Feature Extractor
-    ├── tb_conv_pool.v              # Testbench nhanh khối Conv + Pool
-    └── tb_conv_pool_hex.v          # Testbench nâng cao nạp file dữ liệu ảnh Hex (.MEM)
+├── tb_channel_patch_buffer_ver1.v
+├── tb_channel_patch_ver3.v
+├── tb_conv1_pe_ver1.v
+├── tb_conv1_top_ver1.v
+├── tb_line_buffer1.v
+├── tb_line_buffer_model.v
+├── tb_line_buffer_model_ver2.v
+├── tb_line_ver3.v
+├── tb_sliding_window_top.v
+├── tb_sliding_window_top_ver2.v
+├── tb_sliding_window_ver3.v
+├── tb_top_sliding_window_ver21.v
+├── tb_window_gen.v
+├── tb_window_gen_ver3.v
+├── tb_window_generate_ver2.v
+├── sliding_window/
+├── week_3_1/
+├── week_3_2/
+└── week4/
 ```
 
-> [!TIP]
-> **File Testbench Quan Trọng Nhất:** File [`testbench/tuan3.2/tb_conv_pool_hex.v`](testbench/tuan3.2/tb_conv_pool_hex.v) hỗ trợ đọc ảnh đầu vào 28x28 dạng file hex `.MEM`, tự động đẩy stream dữ liệu vào RTL IP Core và ghi lại kết quả mô phỏng 16 kênh $5 \times 5$ để so sánh trực quan.
+#### Nhóm testbench root
 
----
+| File | Mục tiêu |
+| --- | --- |
+| `tb_line_buffer1.v` | Kiểm thử line buffer bản sớm |
+| `tb_line_buffer_model.v` | Kiểm thử line buffer model |
+| `tb_line_buffer_model_ver2.v` | Kiểm thử biến thể khác của line buffer |
+| `tb_sliding_window_top.v` | Kiểm thử top của sliding window |
+| `tb_sliding_window_top_ver2.v` | Phiên bản test thay thế |
+| `tb_sliding_window_ver3.v` | Test cho sliding window ver3 |
+| `tb_window_gen.v` | Kiểm thử window generator |
+| `tb_window_generate_ver2.v` | Phiên bản test trung gian |
+| `tb_window_gen_ver3.v` | Test cho window generator ver3 |
+| `tb_conv1_pe_ver1.v` | Test PE Conv1 |
+| `tb_conv1_top_ver1.v` | Test top Conv1 |
+| `tb_channel_patch_buffer_ver1.v` | Test patch buffer bản đầu |
+| `tb_channel_patch_ver3.v` | Test patch buffer bản tối ưu |
 
-### 4.4 Thư Thư Mục `doc/` (Tài Liệu Kỹ Thuật & Bài Báo Nghiên Cứu)
+#### `testbench/week_3_1/`
 
-Thư mục [`doc/`](doc/) lưu trữ các tài liệu chính hãng Xilinx cho bo mạch ZCU102 cùng các công trình nghiên cứu khoa học làm nền tảng vi kiến trúc:
+Thư mục này gom các testbench của chặng tuần 3.1, chủ yếu xoay quanh Conv1, Pool1, Conv2 và pipeline ghép từng phần.
 
+```text
+testbench/week_3_1/
+├── tb_conv1_pe_ver1.v
+├── tb_conv1_pool1.v
+├── tb_conv1_pool_ver1.v
+├── tb_conv1_top_ver1.v
+├── tb_conv2_pe.v
+├── tb_conv2_pooling2.v
+├── tb_conv_extractor.v
+├── tb_sliding_window_ver3.v
+├── tb_top_conv1_pooling_ver1.v
+└── tb_top_conv2.v
 ```
+
+#### `testbench/week_3_2/`
+
+Đây là nhánh test gần với bản hoàn chỉnh hơn.
+
+```text
+testbench/week_3_2/
+├── tb_conv_extractor.v
+├── tb_conv_pool.v
+└── tb_conv_pool_hex.v
+```
+
+Trong đó, `tb_conv_pool_hex.v` là file đáng chú ý nhất nếu bạn muốn nạp dữ liệu đầu vào dạng HEX/MEM và xem output stream theo kiểu giống pipeline thực tế.
+
+#### `testbench/sliding_window/`
+
+Đây là một project mô phỏng riêng cho phần sliding window, có cả file cấu hình Quartus/ModelSim.
+
+Nội dung chính gồm:
+
+- `line_buffer1.qpf`
+- `line_buffer1.qsf`
+- `line_buffer1.qws`
+- `sliding_window_top.v`
+- `tb_line_buffer1.v`
+- `tb_sliding_window_top.v`
+- `tb_window_gen.v`
+- `window_gen.v`
+- các thư mục `db/`, `incremental_db/`, `output_files/`, `simulation/`
+
+Thư mục này phù hợp để:
+
+- mở lại project mô phỏng cũ,
+- xem waveform của line buffer/window generator,
+- hoặc đối chiếu hành vi với bản RTL mới hơn.
+
+#### `testbench/week4/`
+
+Hiện thư mục này đang để trống, chỉ có file giữ chỗ. Có thể dùng cho các testbench mở rộng ở chặng sau.
+
+### `doc/`
+
+Thư mục tài liệu chứa các file PDF gốc để tham khảo phần cứng và nền tảng nghiên cứu.
+
+```text
 doc/
-├── ug1182-zcu102-eval-bd.pdf       # Xilinx ZCU102 Evaluation Board User Guide (Sơ đồ chân, FPGA Pinout, BRAM, Clocks)
-├── ug1221-zcu102-base-trd.pdf      # ZCU102 Base Targeted Reference Design Guide (Thiết kế mẫu AXI & Vivado)
-├── xtp426-zcu102-quickstart.pdf    # ZCU102 Quick Start Guide (Hướng dẫn khởi động & cấp nguồn bo mạch)
-└── manual/                         # 📁 Thư mục bài báo nghiên cứu khoa học (Academic Research Papers)
-    ├── 2012.03672v1.pdf            # Nghiên cứu tối ưu hóa phần cứng CNN
-    ├── cnn_fpga_web.pdf            # Tài liệu tổng quan thiết kế CNN trên FPGA
-    ├── lenet-5-cnn-fpga.pdf        # Kiến trúc triển khai LeNet-5 trên phần cứng FPGA
-    ├── paper_relevant.pdf          # Tổng hợp các kỹ thuật tăng tốc phần cứng Deep Learning
-    ├── relevant-prj.pdf            # Phân tích các đồ án và IP Core liên quan
-    ├── row-stationary.pdf          # Kỹ thuật luồng dữ liệu Row-Stationary (Eyeriss Architecture)
-    ├── sliding_cnn_web.pdf         # Giải thuật Cửa sổ trượt song song trên FPGA
-    └── sliding_data-reuse_bandwidth.pdf # Kỹ thuật tái sử dụng dữ liệu Line Buffer để tối ưu băng thông RAM
+├── manual/
+├── ug1182-zcu102-eval-bd.pdf
+├── ug1221-zcu102-base-trd.pdf
+└── xtp426-zcu102-quickstart.pdf
 ```
 
----
+`doc/manual/` hiện chứa các paper tham khảo liên quan đến CNN FPGA, data reuse, row-stationary và các biến thể LeNet/accelerator khác:
 
-### 4.5 Thư Thư Mục `images/` (Hình Ảnh Kiến Trúc & Flowchart)
+- `2012.03672v1.pdf`
+- `lenet-5-cnn-fpga.pdf`
+- `paper_relevant.pdf`
+- `relevant-prj.pdf`
+- `row-stationary.pdf`
+- `sliding_data-reuse_bandwidth.pdf`
+- `source_intern_reference.pdf`
 
-Thư mục [`images/`](images/) chứa các sơ đồ nguyên lý phần cứng được trích xuất từ báo cáo và slide:
+Thư mục này dùng để:
 
-| Tên File | Mô tả chi tiết hình ảnh |
-| :--- | :--- |
-| 🖼️ [`images/Cnn_sliding.png`](images/Cnn_sliding.png) | Sơ đồ minh họa nguyên lý cửa sổ trượt 3x3 trên ảnh 2D |
-| 🖼️ [`images/Intern-system architecture.png`](images/Intern-system architecture.png) | Sơ đồ kiến trúc tổng thể toàn hệ thống kết nối với SoC |
-| 🖼️ [`images/algo_flowchart.png`](images/algo_flowchart.png) | Flowchart giải thuật xử lý tính toán từng tầng |
-| 🖼️ [`images/flowchart_CNN.png`](images/flowchart_CNN.png) | Sơ đồ luồng dữ liệu từ ảnh MNIST đến kết quả Feature Map |
-| 🖼️ [`images/line_buffer_1.png`](images/line_buffer_1.png) | Sơ đồ kết cấu bộ nhớ Line Buffer (Shift Registers & RAM) |
-| 🖼️ [`images/window_gen_1.png`](images/window_gen_1.png) | Sơ đồ khối thanh ghi trượt Window Generator |
+- tra cứu tài liệu board ZCU102,
+- tìm cơ sở lý thuyết cho line buffer/sliding window,
+- và trích dẫn trong báo cáo hoặc slide.
 
----
+### `images/`
 
-### 4.6 Thư Thư Mục `report/` (Báo Cáo Kỹ Thuật & Slide Bảo Vệ)
+Thư mục ảnh hiện có các file minh họa kiến trúc, flow, và sơ đồ kỹ thuật.
 
-Thư mục [`report/`](report/) lưu trữ kết quả đầu ra tổng kết của nhóm trong đợt thực tập tại PTIT:
-
-1. 📄 [`report/Tai_lieu_ky_thuat_CNN_Inference_FPGA.docx`](report/Tai_lieu_ky_thuat_CNN_Inference_FPGA.docx):
-   - Báo cáo thuyết minh kỹ thuật chi tiết.
-   - Trình bày toán học phép cuộn INT8, phương pháp lượng tử hóa (Quantization), sơ đồ thời gian (Timing diagram), latency từng tầng, tài nguyên tổng hợp trên FPGA (LUTs, FFs, BRAMs, DSP48E2).
-2. 📊 [`report/Intern - PTIT - Slide.pdf`](report/Intern - PTIT - Slide.pdf):
-   - Slide thuyết trình bảo vệ kết quả thực tập.
-   - Tổng quan đề tài, giải pháp vi kiến trúc, kết quả mô phỏng Waveform và so sánh hiệu năng.
-
----
-
-### 4.7 Thư Thư Mục `scripts/`, `software/`, `src/`
-
-- 📁 [`scripts/`](scripts/): Dành cho các script tự động hóa (Python / Bash) tạo file dữ liệu ảnh thử nghiệm `.MEM` từ tập dữ liệu MNIST.
-- 📁 [`software/`](software/): Dành cho mã nguồn C/C++ chạy trên vi xử lý ARM PS của ZCU102 để gửi nhận dữ liệu với FPGA IP Core qua AXI DMA.
-- 📁 [`src/`](src/): Dành cho mã nguồn tham chiếu HLS (Vivado HLS C/C++) hoặc mô hình phần mềm kiểm tra đối chứng.
-
----
-
-## 🛠️ Hướng Dẫn Mô Phỏng & Kiểm Thử Phần Cứng
-
-### 5.1 Yêu Cầu Công Cụ (Tools & Environment)
-
-Để chạy và phát triển dự án, bạn cần cài đặt một trong các công cụ sau:
-- **AMD Xilinx Vivado ML Edition** (Phiên bản 2020.1 trở lên - Khuyến nghị Vivado 2022.2 hoặc 2023.1).
-- **Intel Quartus Prime** (Phiên bản Lite hoặc Standard - cho dự án trong `testbench/sliding_window`).
-- **ModelSim / Questasim** hoặc **EDaplayground / Icarus Verilog + GTKWave** để xem dạng sóng RTL.
-
----
-
-### 5.2 Chạy Mô Phỏng Với Vivado / ModelSim
-
-#### Bước 1: Mở phần mềm mô phỏng (Vivado XSim hoặc ModelSim)
-
-#### Bước 2: Add mã nguồn RTL và Testbench phiên bản chuẩn nhất (`tuan3.2`)
-- Thêm tất cả các file trong thư mục `rtl/tuan3.2/*.v`
-- Thêm file testbench `testbench/tuan3.2/tb_conv_pool_hex.v`
-
-#### Bước 3: Thêm đường dẫn file Hex dữ liệu ảnh
-Trong file `tb_conv_pool_hex.v`, chỉnh sửa đường dẫn tham số `HEX_PATH` trỏ tới file `.mem` dữ liệu ảnh MNIST của bạn:
-```verilog
-parameter HEX_PATH = "E:/path_to_your_project/testbench/tuan3.2/hex/";
+```text
+images/
+├── algo_flowchart.png
+├── Cnn_sliding.png
+├── flowchart_CNN.png
+├── Intern-system architecture.png
+├── line_buffer_1.png
+└── window_gen_1.png
 ```
 
-#### Bước 4: Chạy mô phỏng (Run Behavioral Simulation)
-- Thời gian chạy mô phỏng khuyến nghị: `100us`.
-- Quan sát các tín hiệu quan trọng trên Waveform:
-  - `clk`, `rst_n`
-  - `pixel_valid`, `pixel_in`
-  - `pool1_out_valid`, `pool1_bus_flattened`
-  - `pool2_out_valid`, `pool2_out_ch` (Bus 128-bit)
-  - `pe_done` / `pool2_out_last`
+Bạn có thể nhúng trực tiếp một vài ảnh chính vào README hoặc tài liệu thuyết minh:
 
----
+![Kiến trúc hệ thống](images/Intern-system%20architecture.png)
 
-### 5.3 Chạy Dự Án Quartus Prime (Sliding Window)
+![Luồng sliding CNN](images/Cnn_sliding.png)
 
-1. Mở Intel Quartus Prime.
-2. Đường dẫn file project: `testbench/sliding_window/line_buffer1.qpf`.
-3. Nhấn **Compile Design** để kiểm tra tính tổng hợp (Synthesis) và lượng tài nguyên LE/ALUT tiêu thụ.
-4. Mở ModelSim từ Menu **Tools -> Run Simulation Tool -> RTL Simulation**.
+![Flow thuật toán](images/algo_flowchart.png)
 
----
+### `report/`
 
-## 💡 Định Hướng Phát Triển Tiếp Theo
+Thư mục này chứa tài liệu đầu ra dạng báo cáo và slide.
 
-- [ ] Hoàn thiện tầng **Fully Connected (FC Layer)** để xuất trực tiếp kết quả phân loại 10 chữ số (Digit 0-9).
-- [ ] Tích hợp bộ **AXI DMA Core** hỗ trợ nhận/truyền trực tiếp qua RAM DDR4 của bo mạch ZCU102.
-- [ ] Đóng gói thành **IP Core Vivado (IP Catalog)** có giao diện AXI4-Stream tiêu chuẩn.
-- [ ] Thử nghiệm chạy thực tế (On-board Hardware Validation) trên bo mạch FPGA Xilinx ZCU102.
+```text
+report/
+├── Intern - PTIT - Slide.pdf
+├── Report_Intern.docx
+└── Tai_lieu_ky_thuat_CNN_Inference_FPGA.docx
+```
 
----
+Đây là nơi nên mở nếu bạn muốn xem:
 
-<p align="center">
-  <i>Đồ án được thực hiện bởi <b>Nhóm 04 - PTIT Internship Program</b>.</i>
-</p>
+- phần thuyết minh tổng hợp,
+- nội dung báo cáo thực tập,
+- hoặc bộ slide trình bày kết quả.
+
+### `scripts/`
+
+Thư mục này hiện là scaffold để dành cho script hỗ trợ.
+
+Hiện tại nó chưa có file chức năng thực thi, chỉ giữ chỗ bằng `.gitkeep`. Khi mở rộng, đây có thể là nơi đặt:
+
+- script sinh file `.mem` / `.hex`,
+- script convert ảnh đầu vào,
+- script hỗ trợ automation mô phỏng.
+
+### `software/`
+
+Thư mục này cũng đang là scaffold. Nó được giữ để sau này chứa phần mềm chạy trên PS, driver, hoặc code điều khiển IP core.
+
+### `src/`
+
+Thư mục này hiện cũng chỉ là scaffold.
+
+Về lâu dài, nó có thể được dùng cho:
+
+- golden model,
+- source tham chiếu C/C++,
+- hoặc mã HLS nếu muốn đối chiếu với RTL.
+
+## Các Luồng Chạy Chính
+
+### 1. Luồng xử lý RTL chính
+
+```mermaid
+flowchart TD
+    A[Input pixel 28x28] --> B[Line buffer]
+    B --> C[Window generator]
+    C --> D[Conv1 PE array]
+    D --> E[Pool1]
+    E --> F[Channel patch buffer]
+    F --> G[Conv2 PE array]
+    G --> H[Pool2]
+    H --> I[Output 5x5x16]
+```
+
+### 2. Luồng đọc source theo mức độ
+
+| Mức độ | Nên đọc file nào trước |
+| --- | --- |
+| Tổng quan hệ thống | `rtl/tuan3.2/top_conv_feature_extractor.v` |
+| Sliding window | `rtl/tuan3.2/line_buffer_model_ver3.v`, `rtl/tuan3.2/window_generate_ver3.v` |
+| Conv1 | `rtl/tuan3.2/conv1_pe.v`, `rtl/tuan3.2/top_conv1.v` |
+| Pool1 | `rtl/tuan3.2/top_conv1_pooling1.v` |
+| Conv2 | `rtl/tuan3.2/conv2_pe.v`, `rtl/tuan3.2/top_conv2.v` |
+| Pool2 | `rtl/tuan3.2/top_conv2_pooling2.v` |
+| Giao tiếp wrapper | `rtl/tuan3.2/top_conv_axi_wrapper.v` |
+
+## Tài Liệu & Hình Ảnh
+
+### Tài liệu nên xem trước
+
+| File | Dùng để làm gì |
+| --- | --- |
+| `doc/ug1182-zcu102-eval-bd.pdf` | Xem board ZCU102 evaluation |
+| `doc/ug1221-zcu102-base-trd.pdf` | Tra cứu base TRD của ZCU102 |
+| `doc/xtp426-zcu102-quickstart.pdf` | Xem hướng dẫn quick start |
+| `doc/manual/row-stationary.pdf` | Tham khảo dataflow và reuse strategy |
+| `doc/manual/sliding_data-reuse_bandwidth.pdf` | Tham khảo tối ưu băng thông và reuse |
+| `doc/manual/lenet-5-cnn-fpga.pdf` | Tham khảo kiến trúc CNN/LeNet-5 trên FPGA |
+
+### Hình ảnh nên dùng khi thuyết minh
+
+| Ảnh | Ý nghĩa |
+| --- | --- |
+| `images/Intern-system architecture.png` | Sơ đồ kiến trúc tổng thể |
+| `images/Cnn_sliding.png` | Luồng sliding window CNN |
+| `images/algo_flowchart.png` | Flow thuật toán |
+| `images/line_buffer_1.png` | Mô tả line buffer |
+| `images/window_gen_1.png` | Mô tả window generator |
+
+## Ghi Chú Khi Đọc Source
+
+- Nhiều file trong `rtl/` và `testbench/` là các mốc phát triển khác nhau. Tên file có hậu tố `ver1`, `ver2`, `ver3`, hoặc nằm trong `tuan3.1`, `tuan3.2` đều phản ánh lịch sử tối ưu hóa.
+- Bản ghép hệ thống rõ ràng nhất nằm ở `rtl/tuan3.2/`.
+- `scripts/`, `software/`, và `src/` hiện chưa có nội dung chức năng. Chúng là vị trí dành cho mở rộng sau này.
+- Nếu bạn cần đọc theo luồng dữ liệu thực tế, hãy đi từ `line_buffer_model_ver3.v` tới `window_generate_ver3.v`, rồi sang `conv1_pe.v`, `top_conv1_pooling1.v`, `top_conv2_pooling2.v`, và cuối cùng là `top_conv_feature_extractor.v`.
+
+## Tóm Tắt Nhanh
+
+Repository này là một bộ source CNN feature extractor khá hoàn chỉnh, gồm RTL, testbench, tài liệu, ảnh minh họa, và báo cáo thực tập. Nếu bạn mới mở source lần đầu, điểm bắt đầu tốt nhất là `rtl/tuan3.2/top_conv_feature_extractor.v` và `testbench/week_3_2/tb_conv_pool_hex.v`.
