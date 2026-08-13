@@ -2,7 +2,7 @@
 
 > Đồ án Thực tập PTIT - Nhóm 04
 >
-> Repository này hiện thực phần Feature Extractor của LeNet-5 bằng Verilog HDL theo hướng streaming pipeline. Mục tiêu là tái sử dụng dữ liệu qua line buffer và sliding window, giảm truy cập bộ nhớ trung gian, và tạo đầu ra 5x5x16 sẵn sàng ghép với khối FC hoặc phần xử lý phía sau.
+> Repository này hiện thực phần Feature Extractor của LeNet-5 bằng Verilog HDL theo hướng streaming pipeline. Mục tiêu là tái sử dụng dữ liệu qua line buffer và sliding window, giảm truy cập bộ nhớ trung gian, và tạo đầu ra 5x5x24 sẵn sàng ghép với khối FC hoặc phần xử lý phía sau.
 
 ## Mục Lục
 
@@ -23,16 +23,16 @@ Repository này không chỉ là một bộ RTL đơn lẻ. Nó gồm đủ các
 - Tài liệu tham khảo, báo cáo, slide, và hình minh họa kiến trúc.
 - Các thư mục chờ mở rộng cho script, software, và nguồn tham chiếu.
 
-Chuỗi xử lý chính đi từ ảnh 28x28x1 sang feature map 5x5x16 qua các stage:
+Chuỗi xử lý chính đi từ ảnh 28x28x1 sang feature map 5x5x24 qua các stage:
 
 1. Nhận pixel stream đầu vào.
 2. Tạo line buffer cho ảnh.
 3. Sinh patch 3x3 bằng sliding window.
-4. Tính Conv1 với 6 filter.
-5. Pool1 để giảm xuống 13x13x6.
-6. Gom 6 channel patch để cấp cho Conv2.
-7. Tính Conv2 với 16 filter.
-8. Pool2 để tạo output 5x5x16.
+4. Tính Conv1 với 8 filter.
+5. Pool1 để giảm xuống 13x13x8.
+6. Gom 8 channel patch để cấp cho Conv2.
+7. Tính Conv2 với 24 filter.
+8. Pool2 để tạo output 5x5x24.
 9. Đóng gói output cho khối phía sau.
 
 ## Kiến Trúc Xử Lý
@@ -45,10 +45,10 @@ flowchart LR
     LB --> WG[Window generator 3x3]
     WG --> C1[Conv1 PE array\n6 filters]
     C1 --> P1[Pool1 2x2 stride 2]
-    P1 --> CPB[Channel patch buffer\n3x3x6]
-    CPB --> C2[Conv2 PE array\n16 filters]
+    P1 --> CPB[Channel patch buffer\n3x3x8]
+    CPB --> C2[Conv2 PE array\n24 filters]
     C2 --> P2[Pool2 2x2 stride 2]
-    P2 --> OUT[Output stream 5x5x16]
+    P2 --> OUT[Output stream 5x5x24]
 ```
 
 ### Luồng Dữ Liệu
@@ -68,11 +68,11 @@ sequenceDiagram
     S->>L: Đẩy từng pixel của ảnh 28x28
     L->>W: Xuất 3 hàng pixel cùng cột
     W->>C1: Tạo patch 3x3 cho Conv1
-    C1->>P1: Xuất feature map 26x26x6
-    P1->>B: Ghép 6 channel thành tensor 3x3x6
+    C1->>P1: Xuất feature map 26x26x8
+    P1->>B: Ghép 6 channel thành tensor 3x3x8
     B->>C2: Cấp dữ liệu cho Conv2
-    C2->>P2: Xuất feature map 11x11x16
-    P2->>OUT: Xuất output 5x5x16
+    C2->>P2: Xuất feature map 11x11x24
+    P2->>OUT: Xuất output 5x5x24
 ```
 
 ### Điều Khiển Và Handshake
@@ -422,7 +422,7 @@ flowchart TD
     E --> F[Channel patch buffer]
     F --> G[Conv2 PE array]
     G --> H[Pool2]
-    H --> I[Output 5x5x16]
+    H --> I[Output 5x5x24]
 ```
 
 ### 2. Luồng đọc source theo mức độ
