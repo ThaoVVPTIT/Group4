@@ -1,0 +1,13 @@
+Time resolution is 1 ps
+============================================================
+ PASS: 8-lane shared-PE dataflow is numerically correct
+ Conv1 outputs : 676 (expected 676)
+ Pool1 outputs : 169 (expected 169)
+ Conv2 outputs : 121 (expected 121)
+ Pool2 outputs : 25 (expected 25)
+ Conv2 inputs  : 169 (expected 169)
+ Conv2 stalled-valid cycles observed: 3241
+ Verified: tap order, 3 C_out groups, 8 C_in accumulation,
+           bias, rounding, ReLU, clamp, pooling and backpressure.
+============================================================
+$finish called at time : 83101 ns : File "D:/THUC TAP/so_sanh_9_8/cnn_ver5/cnn_ver3/cnn_pe_ver1/cnn_pe_ver1.srcs/sim_1/new/tb_ws_dataflow.v" Line 654

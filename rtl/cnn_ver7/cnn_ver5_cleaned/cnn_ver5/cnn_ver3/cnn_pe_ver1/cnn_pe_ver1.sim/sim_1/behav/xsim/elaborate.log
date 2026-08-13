@@ -1,0 +1,24 @@
+Vivado Simulator v2025.1.0
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+Running: E:/Xilinx/2025.1/Vivado/bin/unwrapped/win64.o/xelab.exe --incr --debug typical --relax --mt 2 -L xil_defaultlib -L unisims_ver -L unimacro_ver -L secureip --snapshot tb_ws_dataflow_behav xil_defaultlib.tb_ws_dataflow xil_defaultlib.glbl -log elaborate.log 
+Using 2 slave threads.
+Starting static elaboration
+Pass Through NonSizing Optimizer
+Completed static elaboration
+Starting simulation data flow analysis
+Completed simulation data flow analysis
+Time Resolution for simulation is 1ps
+Compiling module xil_defaultlib.line_buffer_model_ver3_default
+Compiling module xil_defaultlib.window_generator_ver3
+Compiling module xil_defaultlib.conv1_buf_new
+Compiling module xil_defaultlib.maxpool_relu(CH=8)
+Compiling module xil_defaultlib.line_buffer_model_ver3(IMG_WIDTH...
+Compiling module xil_defaultlib.conv2_buf_new_default
+Compiling module xil_defaultlib.ws_pe_lane_3x3_default
+Compiling module xil_defaultlib.requantize_relu_lane_default
+Compiling module xil_defaultlib.ws_conv_shared_engine_default
+Compiling module xil_defaultlib.maxpool_relu(CH=24,WIDTH=11,HEIG...
+Compiling module xil_defaultlib.tb_ws_dataflow
+Compiling module xil_defaultlib.glbl
+Built simulation snapshot tb_ws_dataflow_behav

@@ -1,0 +1,78 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Mon Aug 10 21:32:00 2026
+| Host         : DESKTOP-EG6CLME running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical -file {D:/THUC TAP/so_sanh_9_8/cnn_ver5/cnn_ver3/cnn_pe_ver1/ver5_reports/utilization_cnn_ver3_1_xc7a100t.rpt}
+| Design       : cnn_accelerator_top
+| Device       : xc7a100tcsg324-1
+| Speed File   : -1
+| Design State : Synthesized
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++-------------------------------------------------+-------------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|                     Instance                    |                   Module                  | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++-------------------------------------------------+-------------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| cnn_accelerator_top                             |                                     (top) |      26158 |      24590 |    1568 |    0 | 23807 |     29 |      0 |         46 |
+|   (cnn_accelerator_top)                         |                                     (top) |          1 |          1 |       0 |    0 |     1 |      0 |      0 |          0 |
+|   u_core                                        |                     axis_cnn_mnist_emnist |      26071 |      24503 |    1568 |    0 | 23790 |     29 |      0 |         46 |
+|     (u_core)                                    |                     axis_cnn_mnist_emnist |        358 |         70 |     288 |    0 |    72 |      0 |      0 |          0 |
+|     u_conv1_window                              |                             conv1_buf_new |        245 |        245 |       0 |    0 |   581 |      0 |      0 |          0 |
+|       u_line_buf                                |                    line_buffer_model_ver3 |        206 |        206 |       0 |    0 |   458 |      0 |      0 |          0 |
+|       u_win_gen                                 |                  window_generator_ver3_28 |         39 |         39 |       0 |    0 |   123 |      0 |      0 |          0 |
+|     u_conv2_window                              |                             conv2_buf_new |       1381 |       1381 |       0 |    0 |  2712 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[7].u_win_gen_ch  |                  window_generator_ver3_27 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[0].u_line_buf_ch |    line_buffer_model_ver3__parameterized0 |        113 |        113 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[0].u_win_gen_ch  |                     window_generator_ver3 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[1].u_line_buf_ch | line_buffer_model_ver3__parameterized0_14 |        112 |        112 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[1].u_win_gen_ch  |                  window_generator_ver3_15 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[2].u_line_buf_ch | line_buffer_model_ver3__parameterized0_16 |        112 |        112 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[2].u_win_gen_ch  |                  window_generator_ver3_17 |         64 |         64 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[3].u_line_buf_ch | line_buffer_model_ver3__parameterized0_18 |        112 |        112 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[3].u_win_gen_ch  |                  window_generator_ver3_19 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[4].u_line_buf_ch | line_buffer_model_ver3__parameterized0_20 |        112 |        112 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[4].u_win_gen_ch  |                  window_generator_ver3_21 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[5].u_line_buf_ch | line_buffer_model_ver3__parameterized0_22 |        111 |        111 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[5].u_win_gen_ch  |                  window_generator_ver3_23 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[6].u_line_buf_ch | line_buffer_model_ver3__parameterized0_24 |        112 |        112 |       0 |    0 |   216 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[6].u_win_gen_ch  |                  window_generator_ver3_25 |         60 |         60 |       0 |    0 |   123 |      0 |      0 |          0 |
+|       g_depth_parallel_sliding[7].u_line_buf_ch | line_buffer_model_ver3__parameterized0_26 |        111 |        111 |       0 |    0 |   216 |      0 |      0 |          0 |
+|     u_fc                                        |                                 fc_stream |       3007 |       2175 |     832 |    0 |  1961 |     29 |      0 |         14 |
+|       (u_fc)                                    |                                 fc_stream |        416 |        288 |     128 |    0 |   148 |      0 |      0 |          0 |
+|       u_argmax                                  |                                  argmax47 |        560 |        560 |       0 |    0 |  1570 |      0 |      0 |          0 |
+|       u_fc1                                     |                                   fc1_seq |        950 |        606 |     344 |    0 |    85 |     24 |      0 |          6 |
+|       u_fc2                                     |                                   fc2_seq |        792 |        544 |     248 |    0 |    80 |      4 |      0 |          6 |
+|       u_fc3                                     |                                   fc3_seq |        289 |        177 |     112 |    0 |    78 |      1 |      0 |          2 |
+|     u_pool1                                     |                              maxpool_relu |        479 |        479 |       0 |    0 |   961 |      0 |      0 |          0 |
+|     u_pool2                                     |              maxpool_relu__parameterized0 |        734 |        734 |       0 |    0 |  1219 |      0 |      0 |          0 |
+|     u_shared_conv                               |                     ws_conv_shared_engine |      19963 |      19515 |     448 |    0 | 16284 |      0 |      0 |         32 |
+|       (u_shared_conv)                           |                     ws_conv_shared_engine |       3037 |       2589 |     448 |    0 | 16284 |      0 |      0 |          0 |
+|       g_physical_lane[0].u_lane                 |                            ws_pe_lane_3x3 |       1594 |       1594 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[1].u_lane                 |                          ws_pe_lane_3x3_0 |       1608 |       1608 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[2].u_lane                 |                          ws_pe_lane_3x3_1 |       1593 |       1593 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[3].u_lane                 |                          ws_pe_lane_3x3_2 |       1587 |       1587 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[4].u_lane                 |                          ws_pe_lane_3x3_3 |       1593 |       1593 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[5].u_lane                 |                          ws_pe_lane_3x3_4 |       1615 |       1615 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[6].u_lane                 |                          ws_pe_lane_3x3_5 |       1593 |       1593 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_physical_lane[7].u_lane                 |                          ws_pe_lane_3x3_6 |       1729 |       1729 |       0 |    0 |     0 |      0 |      0 |          0 |
+|       g_requant_lane[0].u_requant               |                      requantize_relu_lane |        482 |        482 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[1].u_requant               |                    requantize_relu_lane_7 |        508 |        508 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[2].u_requant               |                    requantize_relu_lane_8 |        512 |        512 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[3].u_requant               |                    requantize_relu_lane_9 |        518 |        518 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[4].u_requant               |                   requantize_relu_lane_10 |        515 |        515 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[5].u_requant               |                   requantize_relu_lane_11 |        517 |        517 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[6].u_requant               |                   requantize_relu_lane_12 |        482 |        482 |       0 |    0 |     0 |      0 |      0 |          4 |
+|       g_requant_lane[7].u_requant               |                   requantize_relu_lane_13 |        511 |        511 |       0 |    0 |     0 |      0 |      0 |          4 |
+|   u_scheduler                                   |                             cnn_scheduler |         86 |         86 |       0 |    0 |    16 |      0 |      0 |          0 |
++-------------------------------------------------+-------------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+
+

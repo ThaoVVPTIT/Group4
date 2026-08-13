@@ -1,0 +1,43 @@
+SCHEDULER INTEGRATION - NHOM 1
+==============================
+
+Trang thai: HOAN TAT VA DA REGRESSION
+Ngay: 2026-08-04
+
+File da tich hop/sua:
+- 6_collab_group1.srcs/sources_1/new/cnn_scheduler.v
+- 6_collab_group1.srcs/sources_1/new/cnn_accelerator_top.v
+- 6_collab_group1.srcs/sources_1/new/axis_cnn_mnist_emnist.v
+- 6_collab_group1.srcs/sources_1/new/fc_stream.v
+- 6_collab_group1.srcs/sim_1/new/tb_axis_cnn.v
+- 6_collab_group1.xpr
+- LENET5_RTL_HANDOFF_REPORT.txt
+- run_scheduler_regression.tcl
+
+Sua loi kien truc:
+1. sw_load_en/sw_cfg duoc giu suot pha layer, khong con pulse 1 clock gay
+   deadlock sliding window.
+2. Pool1 co RAM staging 169x64; Conv2 chi replay khi scheduler chon layer 01.
+3. Replay Conv2 drain du 169 input, khong bi cat som khi p2_done den truoc.
+4. FC collect du 25 vector, cho/latch fc_start roi moi chay.
+5. layer_done dem 169 Pool1 va 25 Pool2; fc_done noi tu valid_out cua FC.
+6. done/prediction_ready sticky; error sticky; start held-high khong retrigger.
+7. dma_done cu khong duoc tai su dung cho request lop ke tiep.
+8. AXI output van giu data/valid/last duoi backpressure.
+
+Regression Vivado XSim 2025.1:
+- Compile + elaborate: PASS
+- 2 frame khong reset: PASS
+- Expected/prediction: 0x2c, class 44, 'q', MATCH 2/2
+- Pixel/C1/P1/C2/P2/result: 1568/1352/338/242/50/2
+- Conv2 replay/window: 338/242
+- DMA/layer_done/fc_start: 4/4/2
+- Latency: 89282 cycles moi frame
+- AXI hold/TLAST/backpressure: PASS
+- Start asserted while busy: rejected, no delayed retrigger
+
+Luu y giao tiep Memory Nhom 2:
+dma_done trong ban nay la ACK nguon/config da san sang. Data P1->Conv2 dang
+dung RAM local vi tai lieu chua co bus Memory 64-bit. Neu Nhom 2 muon thay
+RAM local, hai nhom can chot them data/valid/ready/address/length.
+

@@ -1,0 +1,160 @@
+===============================================================================
+HUONG DAN SUA DOI VA BO SUNG RTL NHOM 1 DE DONG BO VOI CNN SCHEDULER
+===============================================================================
+Ngay tao: 2026-08-04
+Muc tieu: Chuyen doi khoi tinh toan EMNIST CNN (Nhom 1) tu kien truc Full-Streaming
+          sang kien truc Layer-by-Layer / DMA-Driven theo dung luong dieu khien
+          cua module cnn_scheduler.
+
+-------------------------------------------------------------------------------
+1. DANH SACH TIN HIEU CAN BO SUNG VAO INTERFACE TOP-LEVEL (NHOM 1)
+-------------------------------------------------------------------------------
+Top-level module cua Nhom 1 (axis_cnn_mnist_emnist hoac cnn_core_top) can
+bo sung cac cong giao tiep sau voi cnn_scheduler:
+
+  a) Tin hieu DAU VAO nhan tu Scheduler (Inputs):
+     - input wire        sw_load_en   : Cho phap kich hoat nap du lieu vao Sliding Window.
+     - input wire [1:0]  sw_cfg       : Cau hinh tham so Sliding Window (2'b00: Conv1, 2'b01: Conv2).
+     - input wire [1:0]  layer_select : Chon lop tinh toan (2'b00: Conv1, 2'b01: Conv2).
+     - input wire        fc_start     : Xung/tin hieu cho phap chay khoi Fully Connected.
+
+  b) Tin hieu DAU RA gui sang Scheduler (Outputs):
+     - output wire       layer_done   : Xung bao da tinh xong toan bo Feature Map cua lop Conv hien tai.
+     - output wire       fc_done      : Xung bao da tinh xong khoi FC + Argmax (da co ket qua).
+
+-------------------------------------------------------------------------------
+2. CHI TIET CAC DIEM CAN SUA DONG TRONG CODE RTL NHOM 1
+-------------------------------------------------------------------------------
+
+[MUC 2.1] BO SUNG BO DEM VÀ PHAT TIN HIEU `layer_done` (Conv1 & Conv2)
+------------------------------------------------------------------
+* Khai bao hien tai: Conv1 va Conv2 chi co valid_out theo tung pixel.
+* Sua doi: Them bo dem pixel dau ra o tang Pool1 va Pool2 de bao xong toan bo lop.
+
+  + De voi Conv1 + Pool1 (Feature map dau ra 13x13 = 169 pixels):
+    Dem moi khi (p1_valid == 1). Khi dem du 169 pixels -> phat 1 xung layer_done_conv1 = 1.
+
+  + De voi Conv2 + Pool2 (Feature map dau ra 5x5 = 25 pixels):
+    Dem moi khi (p2_valid == 1). Khi dem du 25 pixels -> phat 1 xung layer_done_conv2 = 1.
+
+  + Gop tin hieu layer_done tra ve Scheduler:
+    assign layer_done = (layer_select == 2'b00) ? layer_done_conv1 : layer_done_conv2;
+
+
+[MUC 2.2] DIEU KHIEN SLIDING WINDOW BANG `sw_load_en`
+---------------------------------------------------
+* File can sua: `line_buffer_model_ver3.v` hoac `conv1_buf_new.v` / `conv2_buf_new.v`.
+* Sua doi: Khong cho phep Sliding Window tu dong chay/dem vi tri neu Scheduler
+  chua cho phap (chua xong DMA).
+
+  Code mau:
+    wire active_pixel_valid = pixel_valid && sw_load_en;
+    // Thay the toan bo cac noi dung `if (pixel_valid)` thanh `if (active_pixel_valid)`
+
+
+[MUC 2.3] DONG BO KHOI FULLY CONNECTED (`fc_stream.v`)
+-----------------------------------------------------
+* File can sua: `fc_stream.v`
+* Sua doi:
+  1) Noi fc_start tu Scheduler vao dieu kien bat dau chay cua FSM fc_stream
+     (Trang thai IDLE chi chuyen sang COLLECT/RUN khi (valid_in && fc_start)).
+  2) Gan fc_done tra ve cho Scheduler:
+     assign fc_done = am_valid_out; // Tin hieu valid_out cua argmax47
+
+
+[MUC 2.4] QUAN LY LUONG DU LIEU THEO LAYER (`layer_select`)
+-----------------------------------------------------------
+* File can sua: Top-level Nhom 1 (`axis_cnn_mnist_emnist.v`)
+* Sua doi:
+  Khi layer_select == 2'b00 (Conv1): Duo lieu DMA nhap vao `conv1_layer`.
+  Khi layer_select == 2'b01 (Conv2): Duo lieu DMA nhap vao `conv2_layer`.
+
+-------------------------------------------------------------------------------
+3. BANG ANH XA CHAN KET NOI (HANDSHAKE MAPPING TABLE)
+-------------------------------------------------------------------------------
+
++--------------------+-------+--------------------------+----------------------------------------------+
+| Tin hieu Scheduler | Huong | Tin hieu tuong ung Nhom 1| Chuc nang dong bo                            |
++--------------------+-------+--------------------------+----------------------------------------------+
+| sw_load_en         |  ---> | sw_load_en               | Cho phap Line Buffer/Sliding Window nhap px  |
+| sw_cfg[1:0]        |  ---> | sw_cfg[1:0]              | Chon kich thuoc khung (28x28 hoac 13x13)     |
+| layer_select[1:0]  |  ---> | layer_select[1:0]        | Select khoi Conv1 (2'b00) hoac Conv2 (2'b01) |
+| fc_start           |  ---> | fc_start                 | Kich hoat FSM khoi Fully Connected (fc_stream)|
+| layer_done         |  <--- | layer_done               | Phat xung 1 cycle khi tinh xong Conv1/Conv2  |
+| fc_done            |  <--- | fc_done                  | Phat xung 1 cycle khi xong FC & Argmax       |
++--------------------+-------+--------------------------+----------------------------------------------+
+
+-------------------------------------------------------------------------------
+4. DOAN CODE MAU THAM KHAO CHO TOP-LEVEL NHOM 1 (VERILOG)
+-------------------------------------------------------------------------------
+
+module cnn_core_top_sync (
+    input  wire        clk,
+    input  wire        rst_n,
+
+    // Giao tiep vo Scheduler
+    input  wire        sw_load_en,
+    input  wire [1:0]  sw_cfg,
+    input  wire [1:0]  layer_select,
+    input  wire        fc_start,
+    output wire        layer_done,
+    output wire        fc_done,
+
+    // Giao tiep du lieu AXI-Stream / DMA
+    input  wire        s_axis_tvalid,
+    input  wire [7:0]  s_axis_tdata,
+    output wire        s_axis_tready,
+
+    output wire [5:0]  predicted_class,
+    output wire        prediction_valid
+);
+
+    // 1. Dem pixel va tao layer_done cho Conv1 (13x13 = 169 pixels)
+    reg [7:0] conv1_px_cnt;
+    reg       layer_done_c1;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            conv1_px_cnt  <= 0;
+            layer_done_c1 <= 0;
+        end else begin
+            layer_done_c1 <= 0;
+            if (p1_valid) begin
+                if (conv1_px_cnt == 168) begin
+                    conv1_px_cnt  <= 0;
+                    layer_done_c1 <= 1'b1;
+                end else begin
+                    conv1_px_cnt <= conv1_px_cnt + 1'b1;
+                end
+            end
+        end
+    end
+
+    // 2. Dem pixel va tao layer_done cho Conv2 (5x5 = 25 pixels)
+    reg [4:0] conv2_px_cnt;
+    reg       layer_done_c2;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            conv2_px_cnt  <= 0;
+            layer_done_c2 <= 0;
+        end else begin
+            layer_done_c2 <= 0;
+            if (p2_valid) begin
+                if (conv2_px_cnt == 24) begin
+                    conv2_px_cnt  <= 0;
+                    layer_done_c2 <= 1'b1;
+                end else begin
+                    conv2_px_cnt <= conv2_px_cnt + 1'b1;
+                end
+            end
+        end
+    end
+
+    // 3. Gop layer_done tra ve Scheduler
+    assign layer_done = (layer_select == 2'b00) ? layer_done_c1 : layer_done_c2;
+
+    // 4. Noi fc_done tu fc_stream
+    assign fc_done = fc_valid_out;
+
+endmodule
+
+===============================================================================

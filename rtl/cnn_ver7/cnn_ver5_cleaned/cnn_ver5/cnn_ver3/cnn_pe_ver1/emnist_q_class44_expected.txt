@@ -1,0 +1,9 @@
+image_file=emnist_q_class44.hex
+pixel_count=784
+pixel_order=row-major, left-to-right, top-to-bottom
+rotation_degrees=0
+mirror=false
+input_scaling=raw_pixel >> 1
+expected_raw_hex=2c
+expected_class_decimal=44
+expected_character=q

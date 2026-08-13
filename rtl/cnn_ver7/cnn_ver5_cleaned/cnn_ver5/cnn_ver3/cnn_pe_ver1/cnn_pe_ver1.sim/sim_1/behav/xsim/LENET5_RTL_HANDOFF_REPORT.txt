@@ -1,0 +1,181 @@
+LENET-5 EMNIST 8/24/600 - SCHEDULER-INTEGRATED RTL HANDOFF
+==========================================================================
+Cap nhat: 2026-08-04
+
+Top synthesis chinh thuc : cnn_accelerator_top
+Compute engine            : axis_cnn_mnist_emnist
+Scheduler                 : cnn_scheduler
+Kien truc                 : 28x28x1 -> Conv3x3(8) -> Pool2x2 ->
+                            RAM P1 169x64 -> Conv3x3(24) -> Pool2x2 ->
+                            FC 600-120-84-47 -> Argmax
+Clock testbench           : 100 MHz, chu ky 10 ns
+So lop                    : EMNIST Balanced class 0..46
+
+
+1. CHUAN HOA PIXEL CHINH THUC
+--------------------------------------------------------------------------
+    axis_pixel = raw_pixel >> 1
+
+raw_pixel la unsigned 8-bit 0..255. Source/host/testbench thuc hien phep
+dich; RTL khong tu dich. Voi raw pixel nguyen, ket qua nay trung voi
+round(raw_pixel/255*127), nhung contract chinh thuc van la >> 1.
+
+
+2. HUONG ANH VA THU TU PIXEL
+--------------------------------------------------------------------------
+- Anh dung chieu, rotation 0 degree; RTL khong transpose/mirror/rotate.
+- File mem/hex theo row-major: address = y*28 + x.
+- x tang tu trai sang phai, y tang tu tren xuong duoi.
+- address 0 la goc tren-trai; address 783 la goc duoi-phai.
+
+
+3. ANH MAU VA EXPECTED CLASS
+--------------------------------------------------------------------------
+File anh       : emnist_q_class44.hex (giong test_image.mem)
+So pixel       : 784 dong raw hex 8-bit
+Expected byte  : 0x2c
+Expected class : 44 decimal
+Expected char  : 'q'
+Label          : test_label.mem
+
+
+4. INTERFACE RTL CHINH XAC
+--------------------------------------------------------------------------
+module cnn_accelerator_top (
+    input  wire       aclk,
+    input  wire       aresetn,
+
+    input  wire       start,
+    output wire       busy,
+    output wire       done,
+    output wire       error,
+    output wire       prediction_ready,
+
+    output wire       dma_start,
+    input  wire       dma_done,
+    output wire [1:0] layer_select,
+    input  wire       timeout_flag,
+
+    output wire       s_axis_tready,
+    input  wire [7:0] s_axis_tdata,
+    input  wire       s_axis_tvalid,
+
+    input  wire       m_axis_tready,
+    output wire [7:0] m_axis_tdata,
+    output wire       m_axis_tvalid,
+    output wire       m_axis_tlast
+);
+
+Reset aresetn active-low. Khong transfer khi reset.
+
+
+5. CHOT START / DMA / SLIDING-WINDOW / FC
+--------------------------------------------------------------------------
+START:
+- RISC-V phat start trong 1 clock khi busy=0.
+- Mot assertion start chi duoc nhan mot lan. Start khi busy=1 bi tu choi;
+  giu start=1 khong tao request tre/retrigger. Muon request moi phai ha start
+  roi phat lai sau khi busy=0.
+
+DMA:
+- Moi frame co 2 pulse dma_start: layer_select=00 cho Conv1, sau do 01 Conv2.
+- dma_done la ACK "nguon du lieu/config da san sang", khong phai beat AXI.
+- Moi request can mot assertion dma_done rieng; dma_done phai ha thap giua
+  hai ACK. Scheduler khong tai su dung mot muc done cu cho lop tiep theo.
+
+SLIDING WINDOW:
+- sw_load_en la level-enable, giu high trong RUN va WAIT_LAYER_DONE.
+- sw_cfg/layer_select giu 00 cho Conv1 (28x28x1), 01 cho Conv2 (13x13x8).
+- Pool1 duoc luu vao RAM cuc bo 169x64 bit va replay du 169 beat cho Conv2.
+- Replay Conv2 da khoi dong se drain du 169 beat, ke ca khi Pool2 da phat
+  25 output va scheduler chuyen sang FC. Vi vay Conv2 van cho du 121 window.
+
+LAYER DONE:
+- Conv1: pulse 1 clock sau du 169 p1_valid.
+- Conv2: pulse 1 clock sau du 25 p2_valid.
+
+FC:
+- fc_stream thu du 25 vector Pool2 x 24 kenh truoc.
+- Sau do WAIT_FC_START; fc_start duoc latch neu den som.
+- fc_done = fc_stream.valid_out, pulse 1 clock khi class da duoc latch.
+
+
+6. CHOT TVALID / TREADY / TLAST
+--------------------------------------------------------------------------
+Input transfer tai rising edge khi:
+    s_axis_tvalid && s_axis_tready
+
+- Mot frame co dung 784 handshake.
+- Khong co input TLAST; compute engine dem 784 transfer.
+- Source giu TVALID va TDATA on dinh khi TREADY=0.
+- TREADY chi mo trong pha Conv1 da duoc scheduler cho phep.
+
+Output transfer tai rising edge khi:
+    m_axis_tvalid && m_axis_tready
+
+- Mot frame co mot output beat.
+- m_axis_tdata[5:0] = class 0..46; [7:6] = 00.
+- m_axis_tlast = m_axis_tvalid.
+- Khi TREADY=0, TDATA/TVALID/TLAST duoc giu on dinh den handshake.
+
+
+7. DONE / BUSY / PREDICTION_READY / CLASS
+--------------------------------------------------------------------------
+- done va prediction_ready la STICKY LEVEL, khong phai pulse.
+- Chung duoc set trong FINISH va giu den start moi duoc chap nhan.
+- error sticky trong ERROR_STATE den khi reset.
+- busy bao gom thoi gian compute va ca output AXI dang cho duoc nhan.
+- Khi output bi backpressure, done=1/prediction_ready=1 va busy=1 co the
+  cung ton tai: ket qua da tinh xong nhung transaction chua ket thuc.
+- RISC-V/host phai nhan output, doi busy=0, sau do moi phat start moi.
+- Class duoc tra qua AXI-Stream master, khong co class-register port rieng.
+
+
+8. LATENCY / CYCLE COUNT DA XAC MINH
+--------------------------------------------------------------------------
+Dinh nghia latency:
+  handshake pixel dau tien -> handshake output result
+
+Testbench:
+- 100 MHz; input bubble 1 cycle moi 23 pixel.
+- Output backpressure 5 cycles.
+- 2 frame lien tiep, khong reset giua frame.
+
+Ket qua Vivado XSim 2025.1:
+- Frame 1 latency : 89,282 cycles = 892.820 us
+- Frame 2 latency : 89,282 cycles = 892.820 us
+- Session         : 178,576 cycles sau reset release trong Vivado XSim
+                    (Icarus ghi 178,575 do thu tu lap lich TB khac 1 cycle)
+- Prediction      : 0x2c = class 44 = 'q', MATCH 2/2
+- Counts          : pixel 1568, Conv1 1352, Pool1 338,
+                    Conv2 input 338, Conv2 window 242,
+                    Pool2 50, result 2
+- Scheduler       : dma_start 4, layer_done 4, fc_start 2,
+                    done 2 rising edges, prediction_ready 2 rising edges
+- AXI             : input hold, output backpressure/hold/TLAST PASS
+- Start busy test : PASS, khong delayed retrigger
+
+
+9. RANH GIOI TICH HOP VOI NHOM 2
+--------------------------------------------------------------------------
+Bo tai lieu ban dau chi dinh control dma_start/dma_done/layer_select, khong
+dinh nghia data bus 64-bit tu Memory den Conv2. Vi vay ban Group-1 nay dung
+RAM P1 cuc bo lam cau noi chuc nang cho 169x64-bit feature map.
+
+Khi thay bang Memory Group-2 that, can chot them data/valid/ready (toi thieu
+64 bit cho Conv2), thu tu kenh [c*8 +: 8], dia chi/length va backpressure.
+Khong duoc hieu dma_done la ket thuc transfer tren cung AXI input 8-bit;
+trong top hien tai no co nghia nguon/config da san sang de compute bat dau.
+
+
+10. CHAY TREN VIVADO
+--------------------------------------------------------------------------
+1. Dong behavioral simulation cu neu dang mo.
+2. Mo 6_collab_group1.xpr; synthesis top da la cnn_accelerator_top.
+3. Chon Relaunch Simulation de Vivado tao lai compile order/snapshot.
+4. Run All.
+5. Kiem tra dong "PASS session 1", class 44 ('q'), scheduler counts va
+   latency 89282 cycles cho ca hai frame.
+
+Co the chay batch khi Vivado GUI da dong:
+    vivado -mode batch -source run_scheduler_regression.tcl

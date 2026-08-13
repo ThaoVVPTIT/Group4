@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.1 (64-bit)
+# SW Build 6140274 on Thu May 22 00:12:29 MDT 2025
+# IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
+# SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
+# Start of session at: Tue Aug 11 16:47:14 2026
+# Process ID         : 15972
+# Current directory  : D:/THUC TAP/so_sanh_9_8/cnn_ver5/cnn_ver3/cnn_pe_ver1
+# Command line       : vivado.exe -mode batch -source run_ver5_synth_sanity.tcl
+# Log file           : D:/THUC TAP/so_sanh_9_8/cnn_ver5/cnn_ver3/cnn_pe_ver1/vivado.log
+# Journal file       : D:/THUC TAP/so_sanh_9_8/cnn_ver5/cnn_ver3/cnn_pe_ver1\vivado.jou
+# Running On         : DESKTOP-EG6CLME
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26200
+# Processor Detail   : 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz
+# CPU Frequency      : 2995 MHz
+# CPU Physical cores : 2
+# CPU Logical cores  : 4
+# Host memory        : 16893 MB
+# Swap memory        : 1946 MB
+# Total Virtual      : 18839 MB
+# Available Virtual  : 3982 MB
+#-----------------------------------------------------------
+source run_ver5_synth_sanity.tcl
